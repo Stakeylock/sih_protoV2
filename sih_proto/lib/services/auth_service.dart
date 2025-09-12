@@ -10,21 +10,14 @@ class AuthService {
     required String role,
     required String fullName,
   }) async {
-    final AuthResponse res = await _client.auth.signUp(
+    return await _client.auth.signUp(
       email: email,
       password: password,
-    );
-
-    if (res.user != null) {
-      await _client.from('profiles').insert({
-        'id': res.user!.id,
-        'email': email,
-        'role': role.toLowerCase().replaceAll(' ', '_'),
+      data: {
+        'role': role,
         'full_name': fullName,
-      });
-    }
-
-    return res;
+      },
+    );
   }
 
   Future<AuthResponse> signIn({
@@ -43,3 +36,4 @@ class AuthService {
 
   User? get currentUser => _client.auth.currentUser;
 }
+

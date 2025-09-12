@@ -1,28 +1,34 @@
 import 'package:flutter/foundation.dart';
+import 'package:geolocator/geolocator.dart';
+import 'package:sih_proto/services/location_service.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../services/auth_service.dart';
 import '../services/database_service.dart';
-import '../services/supabase_config.dart'; 
+import '../services/supabase_config.dart';
 
 class AppState with ChangeNotifier {
   final AuthService _authService = AuthService();
   final DatabaseService _databaseService = DatabaseService();
-  
+  final LocationService _locationService = LocationService();
+
   User? _currentUser;
   Map<String, dynamic>? _userProfile;
+  Position? _currentPosition;
   bool _isLoading = true;
 
   User? get currentUser => _currentUser;
   Map<String, dynamic>? get userProfile => _userProfile;
+  Position? get currentPosition => _currentPosition;
   bool get isLoading => _isLoading;
 
   AppState() {
     _initializeApp();
   }
 
-  Future<void> _initializeApp() async {    
+  Future<void> _initializeApp() async {
+    await SupabaseConfig.initialize();
     _currentUser = SupabaseConfig.client.auth.currentUser;
-    
+
     if (_currentUser != null) {
       await _loadUserProfile(_currentUser!.id);
     } else {
@@ -30,48 +36,88 @@ class AppState with ChangeNotifier {
       notifyListeners();
     }
 
-    SupabaseConfig.client.auth.onAuthStateChange.listen((AuthState state) async {
-      _currentUser = state.session?.user;
+    SupabaseConfig.client.auth.onAuthStateChange.listen((data) {
+      final session = data.session;
+      _currentUser = session?.user;
       if (_currentUser != null) {
-        await _loadUserProfile(_currentUser!.id);
+        _loadUserProfile(_currentUser!.id);
       } else {
         _userProfile = null;
+        _currentPosition = null;
+        _locationService.stopTracking();
+        _isLoading = false;
+        notifyListeners();
       }
-      _isLoading = false;
-      notifyListeners();
     });
   }
 
   Future<void> _loadUserProfile(String userId) async {
+    _isLoading = true;
+    notifyListeners();
+
     try {
       _userProfile = await _databaseService.getUserProfile(userId);
-    } catch (e) {
-      if (kDebugMode) {
-        print('Error loading user profile: $e');
+      if (_userProfile != null && _userProfile!['role'] == 'Tourist') {
+        _locationService.startTracking(userId, _databaseService).listen((position) {
+          _currentPosition = position;
+          notifyListeners();
+        });
       }
+    } catch (e) {
+      debugPrint('Error loading user profile: $e');
+    } finally {
+      _isLoading = false;
+      notifyListeners();
     }
   }
 
-  Future<void> signIn(String email, String password) async {
-    await _authService.signIn(email: email, password: password);
-    // Auth state listener will handle profile loading and state updates
-  }
-
-  Future<void> signUp({
+  Future<String?> signUp({
     required String email,
     required String password,
-    required String role,
     required String fullName,
+    required String role,
   }) async {
-    await _authService.signUp(
-        email: email, password: password, role: role, fullName: fullName);
-    // Auth state listener will handle profile loading and state updates
+    try {
+      await _authService.signUp(
+        email: email,
+        password: password,
+        role: role, 
+        fullName: fullName, 
+      );
+      return null;
+    } on AuthException catch (e) {
+      return e.message;
+    } catch (e) {
+      return 'An unexpected error occurred.';
+    }
+  }
+
+  Future<String?> signIn({
+    required String email,
+    required String password,
+  }) async {
+    try {
+      await _authService.signIn(email: email, password: password);
+      return null;
+    } on AuthException catch (e) {
+      return e.message;
+    } catch (e) {
+      return 'An unexpected error occurred.';
+    }
+  }
+
+  Future<void> sendPanicAlert() async {
+    if (_currentUser != null && _currentPosition != null) {
+      await _databaseService.createSosIncident(
+        userId: _currentUser!.id,
+        latitude: _currentPosition!.latitude,
+        longitude: _currentPosition!.longitude,
+      );
+    }
   }
 
   Future<void> signOut() async {
     await _authService.signOut();
-    _currentUser = null;
-    _userProfile = null;
-    notifyListeners();
   }
 }
+

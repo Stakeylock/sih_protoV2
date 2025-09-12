@@ -19,14 +19,20 @@ class _LoginPageState extends State<LoginPage> {
     if (_formKey.currentState!.validate()) {
       setState(() => _isLoading = true);
       try {
-        await Provider.of<AppState>(context, listen: false).signIn(
-          _emailController.text,
-          _passwordController.text,
+        // Corrected the way the signIn method is called
+        final appState = Provider.of<AppState>(context, listen: false);
+        await appState.signIn(
+          email: _emailController.text,
+          password: _passwordController.text,
         );
+        // Navigation will be handled by the AppState listener in main.dart
       } catch (e) {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Failed to login: ${e.toString()}')),
+            SnackBar(
+              content: Text('Login failed: ${e.toString()}'),
+              backgroundColor: Colors.red,
+            ),
           );
         }
       } finally {
@@ -49,51 +55,47 @@ class _LoginPageState extends State<LoginPage> {
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                const Icon(Icons.security, color: Colors.blue, size: 80),
-                const SizedBox(height: 20),
                 const Text(
-                  'Welcome Back!',
-                  style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold, color: Colors.white),
+                  'Welcome Back',
+                  style: TextStyle(fontSize: 32, fontWeight: FontWeight.bold, color: Colors.white),
                 ),
                 const SizedBox(height: 10),
                 const Text(
-                  'Log in to ensure your safety',
+                  'Sign in to continue your safe journey',
                   style: TextStyle(fontSize: 16, color: Colors.grey),
                 ),
                 const SizedBox(height: 40),
                 _buildTextFormField(
                   controller: _emailController,
                   labelText: 'Email',
-                  icon: Icons.email,
+                  keyboardType: TextInputType.emailAddress,
                 ),
                 const SizedBox(height: 20),
                 _buildTextFormField(
                   controller: _passwordController,
                   labelText: 'Password',
-                  icon: Icons.lock,
                   obscureText: true,
                 ),
                 const SizedBox(height: 40),
                 _isLoading
                     ? const CircularProgressIndicator()
-                    : ElevatedButton(
-                        onPressed: _handleLogin,
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.blue,
-                          padding: const EdgeInsets.symmetric(horizontal: 80, vertical: 15),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(30),
+                    : SizedBox(
+                        width: double.infinity,
+                        child: ElevatedButton(
+                          onPressed: _handleLogin,
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Colors.blueAccent,
+                            padding: const EdgeInsets.symmetric(vertical: 15),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(15),
+                            ),
                           ),
+                          child: const Text('Login', style: TextStyle(fontSize: 18, color: Colors.white)),
                         ),
-                        child: const Text('Login', style: TextStyle(fontSize: 18, color: Colors.white)),
                       ),
-                const SizedBox(height: 20),
                 TextButton(
                   onPressed: () => Navigator.pushNamed(context, '/register'),
-                  child: const Text(
-                    'Don\'t have an account? Register',
-                    style: TextStyle(color: Colors.white70),
-                  ),
+                  child: const Text('Don\'t have an account? Register', style: TextStyle(color: Colors.blueAccent)),
                 ),
               ],
             ),
@@ -106,17 +108,17 @@ class _LoginPageState extends State<LoginPage> {
   Widget _buildTextFormField({
     required TextEditingController controller,
     required String labelText,
-    required IconData icon,
     bool obscureText = false,
+    TextInputType keyboardType = TextInputType.text,
   }) {
     return TextFormField(
       controller: controller,
       obscureText: obscureText,
+      keyboardType: keyboardType,
       style: const TextStyle(color: Colors.white),
       decoration: InputDecoration(
         labelText: labelText,
         labelStyle: const TextStyle(color: Colors.grey),
-        prefixIcon: Icon(icon, color: Colors.grey),
         filled: true,
         fillColor: const Color(0xFF2d3748),
         border: OutlineInputBorder(
@@ -127,6 +129,12 @@ class _LoginPageState extends State<LoginPage> {
       validator: (value) {
         if (value == null || value.isEmpty) {
           return 'Please enter your $labelText';
+        }
+        if (labelText == 'Email' && !RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$').hasMatch(value)) {
+          return 'Please enter a valid email';
+        }
+        if (labelText == 'Password' && value.length < 6) {
+          return 'Password must be at least 6 characters';
         }
         return null;
       },
@@ -146,28 +154,39 @@ class _RegisterPageState extends State<RegisterPage> {
   String? _selectedRole = 'Tourist';
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
-  final _fullNameController = TextEditingController();
+  final _confirmPasswordController = TextEditingController();
+  final _fullNameController = TextEditingController(); // Added for full name
   bool _isLoading = false;
 
-  final List<String> _roles = ['Tourist', 'Police', 'Admin', 'Other Authority'];
+  final List<String> _roles = ['Tourist', 'Admin', 'Police'];
 
   Future<void> _handleRegister() async {
     if (_formKey.currentState!.validate()) {
-      setState(() => _isLoading = true);
+       setState(() => _isLoading = true);
       try {
-        await Provider.of<AppState>(context, listen: false).signUp(
+        final appState = Provider.of<AppState>(context, listen: false);
+        await appState.signUp(
           email: _emailController.text,
           password: _passwordController.text,
           role: _selectedRole!,
           fullName: _fullNameController.text,
         );
         if (mounted) {
-          Navigator.pop(context);
+           ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Registration successful! Please check your email to verify.'),
+              backgroundColor: Colors.green,
+            ),
+          );
+          Navigator.pushReplacementNamed(context, '/login');
         }
       } catch (e) {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Failed to register: ${e.toString()}')),
+            SnackBar(
+              content: Text('Registration failed: ${e.toString()}'),
+              backgroundColor: Colors.red,
+            ),
           );
         }
       } finally {
@@ -190,59 +209,82 @@ class _RegisterPageState extends State<RegisterPage> {
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                const Icon(Icons.person_add, color: Colors.blue, size: 80),
-                const SizedBox(height: 20),
                 const Text(
                   'Create Account',
-                  style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold, color: Colors.white),
+                  style: TextStyle(fontSize: 32, fontWeight: FontWeight.bold, color: Colors.white),
                 ),
                 const SizedBox(height: 10),
                 const Text(
-                  'Join us to stay safe and secure',
+                  'Join us to ensure a safe and secure journey',
                   style: TextStyle(fontSize: 16, color: Colors.grey),
                 ),
                 const SizedBox(height: 40),
-                _buildTextFormField(
-                  controller: _fullNameController,
-                  labelText: 'Full Name',
-                  icon: Icons.person,
-                ),
+                _buildTextFormField(controller: _fullNameController, labelText: 'Full Name'),
                 const SizedBox(height: 20),
-                _buildTextFormField(
-                  controller: _emailController,
-                  labelText: 'Email',
-                  icon: Icons.email,
-                ),
+                _buildTextFormField(controller: _emailController, labelText: 'Email', keyboardType: TextInputType.emailAddress),
                 const SizedBox(height: 20),
-                _buildTextFormField(
-                  controller: _passwordController,
-                  labelText: 'Password',
-                  icon: Icons.lock,
+                _buildTextFormField(controller: _passwordController, labelText: 'Password', obscureText: true),
+                const SizedBox(height: 20),
+                TextFormField(
+                  controller: _confirmPasswordController,
                   obscureText: true,
+                  style: const TextStyle(color: Colors.white),
+                  decoration: InputDecoration(
+                    labelText: 'Confirm Password',
+                    labelStyle: const TextStyle(color: Colors.grey),
+                    filled: true,
+                    fillColor: const Color(0xFF2d3748),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(15),
+                      borderSide: BorderSide.none,
+                    ),
+                  ),
+                  validator: (value) {
+                    if (value != _passwordController.text) {
+                      return 'Passwords do not match';
+                    }
+                    return null;
+                  },
                 ),
                 const SizedBox(height: 20),
-                _buildDropdown(),
+                 DropdownButtonFormField<String>(
+                  decoration: InputDecoration(
+                    labelText: 'Select Role',
+                    labelStyle: const TextStyle(color: Colors.grey),
+                    filled: true,
+                    fillColor: const Color(0xFF2d3748),
+                     border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(15),
+                      borderSide: BorderSide.none,
+                    ),
+                  ),
+                  dropdownColor: const Color(0xFF2d3748),
+                  style: const TextStyle(color: Colors.white),
+                  value: _selectedRole,
+                  items: _roles.map((role) => DropdownMenuItem(value: role, child: Text(role))).toList(),
+                  onChanged: (value) => setState(() => _selectedRole = value),
+                  validator: (value) => value == null ? 'Please select a role' : null,
+                ),
                 const SizedBox(height: 40),
                 _isLoading
                     ? const CircularProgressIndicator()
-                    : ElevatedButton(
-                        onPressed: _handleRegister,
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.blue,
-                          padding: const EdgeInsets.symmetric(horizontal: 80, vertical: 15),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(30),
+                    : SizedBox(
+                        width: double.infinity,
+                        child: ElevatedButton(
+                          onPressed: _handleRegister,
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Colors.blueAccent,
+                            padding: const EdgeInsets.symmetric(vertical: 15),
+                             shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(15),
+                            ),
                           ),
+                          child: const Text('Register', style: TextStyle(fontSize: 18, color: Colors.white)),
                         ),
-                        child: const Text('Register', style: TextStyle(fontSize: 18, color: Colors.white)),
                       ),
-                const SizedBox(height: 20),
                 TextButton(
-                  onPressed: () => Navigator.pop(context),
-                  child: const Text(
-                    'Already have an account? Login',
-                    style: TextStyle(color: Colors.white70),
-                  ),
+                  onPressed: () => Navigator.pushNamed(context, '/login'),
+                  child: const Text('Already have an account? Login', style: TextStyle(color: Colors.blueAccent)),
                 ),
               ],
             ),
@@ -251,21 +293,20 @@ class _RegisterPageState extends State<RegisterPage> {
       ),
     );
   }
-
-  Widget _buildTextFormField({
+    Widget _buildTextFormField({
     required TextEditingController controller,
     required String labelText,
-    required IconData icon,
     bool obscureText = false,
+    TextInputType keyboardType = TextInputType.text,
   }) {
     return TextFormField(
       controller: controller,
       obscureText: obscureText,
+      keyboardType: keyboardType,
       style: const TextStyle(color: Colors.white),
       decoration: InputDecoration(
         labelText: labelText,
         labelStyle: const TextStyle(color: Colors.grey),
-        prefixIcon: Icon(icon, color: Colors.grey),
         filled: true,
         fillColor: const Color(0xFF2d3748),
         border: OutlineInputBorder(
@@ -277,39 +318,15 @@ class _RegisterPageState extends State<RegisterPage> {
         if (value == null || value.isEmpty) {
           return 'Please enter your $labelText';
         }
+        if (labelText == 'Email' && !RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$').hasMatch(value)) {
+          return 'Please enter a valid email';
+        }
+        if (labelText == 'Password' && value.length < 6) {
+          return 'Password must be at least 6 characters';
+        }
         return null;
       },
     );
   }
-
-  Widget _buildDropdown() {
-    return DropdownButtonFormField<String>(
-      decoration: InputDecoration(
-        labelText: 'Select Role',
-        labelStyle: const TextStyle(color: Colors.grey),
-        prefixIcon: const Icon(Icons.work, color: Colors.grey),
-        filled: true,
-        fillColor: const Color(0xFF2d3748),
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(15),
-          borderSide: BorderSide.none,
-        ),
-      ),
-      value: _selectedRole,
-      dropdownColor: const Color(0xFF2d3748),
-      style: const TextStyle(color: Colors.white),
-      items: _roles
-          .map((role) => DropdownMenuItem(
-                value: role,
-                child: Text(role),
-              ))
-          .toList(),
-      onChanged: (value) {
-        setState(() {
-          _selectedRole = value;
-        });
-      },
-      validator: (value) => value == null ? 'Please select a role' : null,
-    );
-  }
 }
+
