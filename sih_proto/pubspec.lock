@@ -862,7 +862,7 @@ packages:
     source: hosted
     version: "0.4.2"
   libphonenumber_plugin:
-    dependency: transitive
+    dependency: "direct main"
     description:
       name: libphonenumber_plugin
       sha256: c615021d9816fbda2b2587881019ed595ecdf54d999652d7e4cce0e1f026368c
@@ -974,7 +974,7 @@ packages:
     source: hosted
     version: "2.1.0"
   package_info_plus:
-    dependency: transitive
+    dependency: "direct main"
     description:
       name: package_info_plus
       sha256: "16eee997588c60225bda0488b6dcfac69280a6b7a3cf02c741895dd370a02968"

@@ -53,6 +53,7 @@ dependencies:
   encrypt: ^5.0.3
   flutter_dotenv: ^6.0.0
   google_maps_flutter: ^2.13.1
+  package_info_plus: ^8.0.0
   google_fonts: ^6.3.1
   flutter_secure_storage: ^9.2.4
   crypto: ^3.0.6
@@ -62,6 +63,7 @@ dependencies:
   connectivity_plus: ^7.0.0
   smooth_page_indicator: ^1.2.1
   flutter_svg: ^2.2.1
+  libphonenumber_plugin: ^0.3.3
   cached_network_image: ^3.4.1
   intl_phone_number_input: ^0.7.4
   country_pickers: ^3.0.1
