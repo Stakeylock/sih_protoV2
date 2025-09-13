@@ -5,8 +5,6 @@ plugins {
     id("dev.flutter.flutter-gradle-plugin")
 }
 
-val backgroundGeolocation = project(":flutter_background_geolocation")
-apply { from("${backgroundGeolocation.projectDir}/background_geolocation.gradle") }
 
 android {
     namespace = "com.example.sih_proto"
