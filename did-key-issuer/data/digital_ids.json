@@ -25,5 +25,32 @@
     "keyType": "Ed25519",
     "issuedAt": "2025-09-13T16:44:03.681Z",
     "status": "active"
+  },
+  {
+    "userId": "e98315a3-28b2-4863-8839-ae96783b471f",
+    "did": "did:key:z6Mkw9fN3f3r6caBireM9QdvQxhNVP2bGrjdFPo2F15G6Ddr",
+    "method": "did:key",
+    "publicKeyMultibase": "z6Mkw9fN3f3r6caBireM9QdvQxhNVP2bGrjdFPo2F15G6Ddr",
+    "keyType": "Ed25519",
+    "issuedAt": "2025-09-13T18:44:54.801Z",
+    "status": "active"
+  },
+  {
+    "userId": "3b69cf41-76f6-4b0c-b0ec-bcfb7d9cdaff",
+    "did": "did:key:z6Mkjna7tBbVdqDbNA4jEuXFoWWN6hDP2AKVQJ1u45CPnkqM",
+    "method": "did:key",
+    "publicKeyMultibase": "z6Mkjna7tBbVdqDbNA4jEuXFoWWN6hDP2AKVQJ1u45CPnkqM",
+    "keyType": "Ed25519",
+    "issuedAt": "2025-09-13T18:57:49.372Z",
+    "status": "active"
+  },
+  {
+    "userId": "6b4ee1ac-8c22-4aab-b055-0935fcf15f20",
+    "did": "did:key:z6MkjweMNpK96QaKZ1r7ftJ2ymjbjTDkcVAgDd2FkFYsm4Au",
+    "method": "did:key",
+    "publicKeyMultibase": "z6MkjweMNpK96QaKZ1r7ftJ2ymjbjTDkcVAgDd2FkFYsm4Au",
+    "keyType": "Ed25519",
+    "issuedAt": "2025-09-13T19:05:29.655Z",
+    "status": "active"
   }
 ]
