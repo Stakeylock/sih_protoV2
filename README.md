@@ -70,7 +70,7 @@ npm install
     npm start  # Runs dist/server.js
     ```
 
-The server will start on `http://localhost:3000` by default. Check `package.json` for scripts and `src/index.ts` for configuration (e.g., port, database connections).
+The server will start on `http://localhost:8787` by default. Check `package.json` for scripts and `src/server.ts` for configuration (e.g., port, database connections).
 
 ### 3. Frontend Setup (Flutter App)
 The Flutter app is in the `sih_proto` directory.
@@ -92,7 +92,7 @@ flutter pub get
    flutter run
    ```
    - This launches the app on a connected device or emulator (Android/iOS).
-   - The app will connect to the backend at `http://localhost:3000` (update `lib/config.dart` for custom URLs in production).
+   - The app will connect to the backend at `http://localhost:8787` .
 
 ### Testing the App
 - Use an Android emulator or physical device.
@@ -103,7 +103,7 @@ flutter pub get
 
 To generate a release-ready APK:
 
-1. Ensure the backend is configured for production (e.g., update API base URL in `sih_proto/lib/config.dart` to your deployed server).
+1. Ensure the backend is configured for production .
 2. In the `sih_proto` directory:
    ```bash
    flutter build apk --release
@@ -111,23 +111,11 @@ To generate a release-ready APK:
    - Output: `build/app/outputs/flutter-apk/app-release.apk`.
    - This creates a signed APK (default debug keystore; for production, generate a keystore via `keytool` and update `android/key.properties`).
 
-3. Install on device:
-   ```bash
-   adb install build/app/outputs/flutter-apk/app-release.apk
-   ```
 
-For App Bundle (Google Play):
-```bash
-flutter build appbundle --release
-```
-
-**Notes**:
-- Obfuscate code for production: Add `--obfuscate --split-debug-info=build/`.
-- Test on multiple devices for compatibility.
 
 ## API Documentation
 
-The backend exposes RESTful APIs for DID issuance and verification. Use tools like Postman, Insomnia, or curl for testing. Base URL: `http://localhost:3000/api/v1`.
+The backend exposes RESTful APIs for DID issuance and verification. Use tools like Postman, Insomnia, or curl for testing. Base URL: `http://localhost:8787/api/v1`.
 
 All endpoints require authentication (JWT token in `Authorization: Bearer <token>` header, obtained via `/auth/login`).
 
@@ -171,7 +159,7 @@ All endpoints require authentication (JWT token in `Authorization: Bearer <token
 ### Testing APIs
 - Run the server and use:
   ```bash
-  curl -X POST http://localhost:3000/api/v1/auth/login \
+  curl -X POST http://localhost:8787/api/v1/auth/login \
   -H "Content-Type: application/json" \
   -d '{"email":"test@example.com","password":"password"}'
   ```
