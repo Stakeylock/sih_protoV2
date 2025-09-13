@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:sih_proto/providers/app_state.dart';
-import 'package:sih_proto/screens/admin_dashboard.dart';
+// CORRECTED: Remove the old admin dashboard import
+// import 'package:sih_proto/screens/admin_dashboard.dart'; 
+// ADDED: Import the new, correct admin dashboard screen
+import 'package:sih_proto/screens/admin/admin_dashboard_screen.dart';
 import 'package:sih_proto/screens/auth_screens.dart';
 import 'package:sih_proto/screens/police_dashboard.dart';
 import 'package:sih_proto/screens/splash_screen.dart';
@@ -27,7 +30,8 @@ class AuthGate extends StatelessWidget {
           final userRole = appState.userProfile?['role'] ?? 'Tourist';
           switch (userRole) {
             case 'Admin':
-              return const AdminDashboard();
+              // FIXED: Point to the new AdminDashboardScreen
+              return const AdminDashboardScreen();
             case 'Police':
               return const PoliceDashboard();
             case 'Tourist':

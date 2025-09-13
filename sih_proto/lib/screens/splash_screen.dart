@@ -1,72 +1,61 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
-import 'package:sih_proto/providers/app_state.dart';
-import 'package:sih_proto/screens/auth_screens.dart';
-import 'package:sih_proto/screens/tourist_dashboard.dart';
 
-class SplashScreen extends StatefulWidget {
+class SplashScreen extends StatelessWidget {
   const SplashScreen({super.key});
 
   @override
-  _SplashScreenState createState() => _SplashScreenState();
-}
-
-class _SplashScreenState extends State<SplashScreen> {
-  AppState? _appState; // Store reference to AppState
-
-  @override
-  void didChangeDependencies() {
-    super.didChangeDependencies();
-    // Save reference to AppState
-    _appState = Provider.of<AppState>(context, listen: false);
-    // Initial setup moved from initState to ensure context is valid
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      _appState!.addListener(_onAppStateChanged);
-      _checkAndNavigate(_appState!);
-    });
-  }
-
-  void _onAppStateChanged() {
-    _checkAndNavigate(_appState!);
-  }
-
-  void _checkAndNavigate(AppState appState) {
-    // Only navigate if loading is false. This prevents premature navigation.
-    if (!appState.isLoading) {
-      // Remove the listener before navigating to avoid multiple navigation attempts.
-      appState.removeListener(_onAppStateChanged);
-      if (appState.currentUser != null) {
-        Navigator.of(context).pushReplacement(
-          MaterialPageRoute(builder: (_) => const TouristDashboard()),
-        );
-      } else {
-        Navigator.of(context).pushReplacement(
-          MaterialPageRoute(builder: (_) => const LoginPage()),
-        );
-      }
-    }
-  }
-
-  @override
-  void dispose() {
-    // Use stored _appState reference instead of Provider.of
-    _appState?.removeListener(_onAppStateChanged);
-    super.dispose();
-  }
-
-  @override
   Widget build(BuildContext context) {
-    return const Scaffold(
+    // This splash screen is now a stateless widget. Its only job is to display
+    // the UI while the AppState provider and AuthGate are initializing.
+    // All navigation logic has been removed and is correctly handled by AuthGate.
+
+    return Scaffold(
+      backgroundColor: const Color(0xFF1a202c), // Consistent with your app's dark theme
       body: Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            CircularProgressIndicator(),
-            SizedBox(height: 20),
-            Text('Loading Tourist Safety System...'),
+            // A more visually appealing logo representation
+            Container(
+              padding: const EdgeInsets.all(24),
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: Colors.blueAccent.withOpacity(0.1),
+                border: Border.all(
+                  color: Colors.blueAccent.withOpacity(0.3),
+                  width: 2,
+                ),
+              ),
+              child: const Icon(
+                Icons.security_rounded,
+                size: 80,
+                color: Colors.blueAccent,
+              ),
+            ),
+            const SizedBox(height: 24),
+            Text(
+              'Suraksha Setu',
+              style: Theme.of(context).textTheme.headlineMedium?.copyWith(
+                color: Colors.white,
+                fontWeight: FontWeight.bold,
+                letterSpacing: 1.2,
+              ),
+            ),
+             const SizedBox(height: 8),
+            Text(
+              'Your Safety, Our Priority.',
+              style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                color: Colors.white.withOpacity(0.7),
+              ),
+            ),
+            const SizedBox(height: 64),
+            const CircularProgressIndicator(
+              valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+            ),
           ],
         ),
       ),
     );
   }
 }
+

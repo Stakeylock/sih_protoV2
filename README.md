@@ -2,40 +2,47 @@
 
 [![Flutter](https://img.shields.io/badge/Flutter-3.24.0-blue)](https://flutter.dev)
 [![Node.js](https://img.shields.io/badge/Node.js-18.x-green)](https://nodejs.org)
+[![Python](https://img.shields.io/badge/Python-3.x-yellow)](https://python.org)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
 ## Overview
 
-SIH Proto V2 is a prototype application built for the Smart India Hackathon (SIH) focusing on Decentralized Identity (DID) issuance and verification using Flutter for the mobile frontend and Node.js for the backend issuer service. The app allows users to request and manage DIDs securely, with a focus on privacy-preserving identity solutions.
+SIH Proto V2 is a prototype application built for the Smart India Hackathon (SIH) focusing on Decentralized Identity (DID) issuance and verification, as well as geofencing features. It uses Flutter for the mobile frontend, Node.js for the DID issuer backend, and Python for the geofence backend service. The app allows users to request and manage DIDs securely, with privacy-preserving identity solutions, and includes location-based geofencing capabilities.
 
 This repository contains:
 - **Flutter App**: Cross-platform mobile app (Android/iOS) for user interaction, located in the `sih_proto` directory.
 - **DID Issuer Backend**: Node.js server handling DID creation, issuance, and API endpoints, located in the `did-key-issuer` directory.
+- **Geofence Backend**: Python server for geofencing functionality, located in the `geofence_backend` directory.
 
 ## Repository Structure
 - `did-key-issuer/`: Backend Node.js application (JS version of TS files)
   - Contains server code, package.json, and related dependencies.
+- `geofence_backend/`: Python backend for geofencing
+  - Contains `app.py` (main script), `requirements.txt` (dependencies), and `.env` (environment variables).
 - `sih_proto/`: Frontend Flutter application
   - Basic digital ID generation app.
   - Standard Flutter structure: `lib/`, `android/`, `ios/`, `pubspec.yaml`, etc.
+- `LICENSE`: MIT License file.
 - `README.md`: This file.
 
 ## Features
-- User-friendly Flutter interface for DID requests and verification.
+- User-friendly Flutter interface for DID requests, verification, and geofencing.
 - Secure Node.js backend for issuing verifiable credentials.
+- Python backend for handling geofence logic and location services.
 - Support for TypeScript development with compiled JavaScript builds (source in `src/`, compiled in `dist/` for `did-key-issuer`).
 - APK generation for Android deployment.
-- RESTful API for integration and testing.
+- RESTful APIs for integration and testing.
 
 ## Prerequisites
 - **Flutter SDK**: Version 3.24.0 or higher. Install from [flutter.dev](https://flutter.dev).
 - **Node.js**: Version 18.x or higher. Install from [nodejs.org](https://nodejs.org).
 - **npm**: Version 9.x or higher (comes with Node.js).
+- **Python**: Version 3.x or higher. Install from [python.org](https://python.org).
 - **Android Studio**: For Android development and APK building (includes Android SDK).
 - **Git**: For cloning the repository.
 - Optional: VS Code or Android Studio for IDE.
 
-Ensure your development environment is set up with Flutter doctor (`flutter doctor`) and Node version check (`node -v`).
+Ensure your development environment is set up with Flutter doctor (`flutter doctor`), Node version check (`node -v`), and Python version check (`python --version`).
 
 ## Installation
 
@@ -45,8 +52,8 @@ git clone https://github.com/Stakeylock/sih_protoV2.git
 cd sih_protoV2
 ```
 
-### 2. Backend Setup (DID Issuer)
-The backend is located in the `did-key-issuer` directory. It uses TypeScript for development (source in `src/`) and compiles to JavaScript (in `dist/`).
+### 2. DID Issuer Backend Setup
+The DID issuer backend is located in the `did-key-issuer` directory. It uses TypeScript for development (source in `src/`) and compiles to JavaScript (in `dist/`).
 
 ```bash
 cd did-key-issuer
@@ -70,22 +77,50 @@ npm install
     npm start  # Runs dist/server.js
     ```
 
-The server will start on `http://localhost:8787` by default. Check `package.json` for scripts and `src/server.ts` for configuration (e.g., port, database connections).
+The server will start on `http://localhost:3000` by default. Check `package.json` for scripts and `src/server.ts` for configuration (e.g., port, database connections).
 
-### 3. Frontend Setup (Flutter App)
+### 3. Geofence Backend Setup
+The geofence backend is located in the `geofence_backend` directory.
+
+```bash
+cd ../geofence_backend  # From root or did-key-issuer
+```
+
+Create a Python virtual environment:
+
+```bash
+python -m venv venv
+source venv/bin/activate  # On Windows: venv\Scripts\activate
+```
+
+Install dependencies:
+
+```bash
+pip install -r requirements.txt
+```
+
+Run the Python app:
+
+```bash
+python app.py
+```
+
+The Flask server will start on `http://localhost:5000` by default. Configure environment variables in `.env` as needed 
+
+### 4. Frontend Setup (Flutter App)
 The Flutter app is in the `sih_proto` directory.
 
 ```bash
-cd ../sih_proto  # From root or did-key-issuer
+cd ../sih_proto  # From root or backends
 flutter pub get
 ```
 
-- Ensure the backend is running before proceeding to usage.
+- Ensure both backends are running before proceeding to usage.
 
 ## Usage
 
 ### Running the Flutter App
-1. Start the backend server (as described in Backend Setup).
+1. Start both backend servers (DID Issuer and Geofence as described in Backend Setups).
 2. In the `sih_proto` directory:
    ```bash
    cd sih_proto
@@ -96,30 +131,30 @@ flutter pub get
 
 ### Testing the App
 - Use an Android emulator or physical device.
-- Navigate through screens: Login → DID Request → Verification.
-- Logs: Check Flutter console for app logs and Node.js terminal for backend logs.
+- Navigate through screens: Login → DID Request → Verification → Geofence Settings.
+- Logs: Check Flutter console for app logs, Node.js terminal for DID logs, and Python terminal for geofence logs.
 
 ## Building APK for Android
 
 To generate a release-ready APK:
 
-1. Ensure the backend is configured for production .
+1. Ensure both backends are configured for production (e.g., update API base URLs in the Flutter app).
 2. In the `sih_proto` directory:
    ```bash
    flutter build apk --release
    ```
    - Output: `build/app/outputs/flutter-apk/app-release.apk`.
-   - This creates a signed APK (default debug keystore; for production, generate a keystore via `keytool` and update `android/key.properties`).
 
 
 
 ## API Documentation
 
-The backend exposes RESTful APIs for DID issuance and verification. Use tools like Postman, Insomnia, or curl for testing. Base URL: `http://localhost:8787/api/v1`.
+### DID Issuer APIs
+The Node.js backend exposes RESTful APIs for DID issuance and verification. Use tools like Postman, Insomnia, or curl for testing. Base URL: `http://localhost:3000/api/v1`.
 
 All endpoints require authentication (JWT token in `Authorization: Bearer <token>` header, obtained via `/auth/login`).
 
-### Authentication
+#### Authentication
 - **POST /api/v1/auth/login**
   - Body: `{ "email": "string", "password": "string" }`
   - Response: `{ "token": "string", "userId": "string" }`
@@ -130,7 +165,7 @@ All endpoints require authentication (JWT token in `Authorization: Bearer <token
   - Response: `{ "userId": "string", "message": "User created" }`
   - Description: Register a new user.
 
-### DID Issuer Endpoints
+#### DID Issuer Endpoints
 - **POST /api/v1/did/request**
   - Headers: `Authorization: Bearer <token>`
   - Body: `{ "userId": "string", "attributes": ["name", "email"] }` (array of verifiable attributes)
@@ -149,6 +184,11 @@ All endpoints require authentication (JWT token in `Authorization: Bearer <token
   - Response: Array of `{ "did": "string", "issuedAt": "ISO-date", "status": "active/revoked" }`
   - Description: List user's issued DIDs.
 
+### Geofence APIs
+(Assuming standard Flask or FastAPI setup in `app.py`; update based on actual code. For example:)
+- Base URL: `http://localhost:5000` (check `app.py` for port).
+- Endpoints: Document specific routes like `/geofence/create`, `/geofence/check`, etc., if known.
+
 ### Error Handling
 - All errors return: `{ "error": "string", "code": 400/401/500 }`
 - Common codes:
@@ -157,13 +197,14 @@ All endpoints require authentication (JWT token in `Authorization: Bearer <token
   - 500: Internal Server Error (log for details).
 
 ### Testing APIs
-- Run the server and use:
+- For DID Issuer: Run the server and use:
   ```bash
-  curl -X POST http://localhost:8787/api/v1/auth/login \
+  curl -X POST http://localhost:3000/api/v1/auth/login \
   -H "Content-Type: application/json" \
   -d '{"email":"test@example.com","password":"password"}'
   ```
-- For full OpenAPI spec, run `npm run docs` in `did-key-issuer` (generates Swagger JSON in `docs/` if Swagger is integrated).
+- For Geofence: Similar curl commands based on routes.
+- For full OpenAPI spec in DID Issuer, run `npm run docs` in `did-key-issuer` (generates Swagger JSON in `docs/` if integrated).
 
 ## Contributing
 1. Fork the repo.
@@ -172,7 +213,7 @@ All endpoints require authentication (JWT token in `Authorization: Bearer <token
 4. Push to branch (`git push origin feature/AmazingFeature`).
 5. Open a Pull Request.
 
-For backend: Update `src/` and run `npm run build`. For frontend: Run `flutter pub get` after changes.
+For DID backend: Update `src/` and run `npm run build`. For Geofence: Update `app.py` and restart. For frontend: Run `flutter pub get` after changes.
 
 ## License
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.

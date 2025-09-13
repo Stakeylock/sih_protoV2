@@ -1,12 +1,74 @@
+import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:provider/provider.dart';
 import 'package:sih_proto/providers/app_state.dart';
 import 'package:sih_proto/utils/app_theme.dart';
+import 'package:http/http.dart' as http;
 
-class LiveMapScreen extends StatelessWidget {
+class LiveMapScreen extends StatefulWidget {
   const LiveMapScreen({super.key});
+
+  @override
+  State<LiveMapScreen> createState() => _LiveMapScreenState();
+}
+
+class _LiveMapScreenState extends State<LiveMapScreen> {
+  List<Polygon<Object>> _geofences = [];
+  bool _isLoadingFences = true;
+
+  // FIXED: Changed URL for web/desktop compatibility.
+  final String _backendUrl = 'http://127.0.0.1:5000';
+
+  @override
+  void initState() {
+    super.initState();
+    _fetchGeofences();
+  }
+
+  Future<void> _fetchGeofences() async {
+    try {
+      final response = await http.get(Uri.parse('$_backendUrl/geofences'));
+      if (mounted) {
+        if (response.statusCode == 200) {
+            final List<dynamic> data = json.decode(response.body);
+            final List<Polygon<Object>> polygons = data.map((fence) {
+              final List<dynamic> pointsData = fence['area'];
+              final List<LatLng> points = pointsData
+                  .map((p) => LatLng(p[0].toDouble(), p[1].toDouble()))
+                  .toList();
+              return Polygon<Object>(
+                  points: points,
+                  color: Colors.orange.withOpacity(0.4),
+                  borderColor: Colors.orange,
+                  borderStrokeWidth: 2,
+              );
+            }).toList();
+
+            setState(() {
+              _geofences = polygons;
+            });
+        } else {
+            throw Exception('Failed to load geofences');
+        }
+      }
+    } catch (e) {
+      debugPrint("Error fetching geofences: $e");
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Could not load safe zones: $e')),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() {
+            _isLoadingFences = false;
+        });
+      }
+    }
+  }
+
 
   @override
   Widget build(BuildContext context) {
@@ -39,10 +101,9 @@ class LiveMapScreen extends StatelessWidget {
             children: [
               TileLayer(
                 urlTemplate: 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
-                subdomains: const ['a', 'b', 'c'],
-                // For dark mode maps, you can use a different tile provider
-                // e.g., 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png'
+                // REMOVED: subdomains property to resolve map warning
               ),
+              if (!_isLoadingFences) PolygonLayer(polygons: _geofences),
               MarkerLayer(
                 markers: [
                   Marker(
@@ -72,4 +133,3 @@ class LiveMapScreen extends StatelessWidget {
     );
   }
 }
-

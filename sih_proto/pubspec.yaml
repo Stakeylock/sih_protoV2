@@ -33,12 +33,13 @@ dependencies:
   flutter_localizations:
     sdk: flutter
   intl: ^0.20.2
-  http: ^1.5.0
+  http: ^1.5.0 
   provider: ^6.1.5
   shared_preferences: ^2.5.3
   geolocator: ^14.0.2
   geocoding: ^4.0.0
   flutter_map: ^8.2.1
+  maps_toolkit: ^3.0.0 # ADDED as requested
   latlong2: ^0.9.1
   url_launcher: ^6.3.2
   camera: ^0.11.2
@@ -67,7 +68,7 @@ dependencies:
   cached_network_image: ^3.4.1
   intl_phone_number_input: ^0.7.4
   country_pickers: ^3.0.1
-  flutter_background_geolocation: ^4.18.0
+
 
 dev_dependencies:
   flutter_test:

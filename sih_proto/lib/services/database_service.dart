@@ -4,7 +4,7 @@ import 'supabase_config.dart';
 import 'digital_id_service.dart';
 
 class DatabaseService {
-  final SupabaseClient _client = SupabaseConfig.client;
+  final SupabaseClient _client = SupabaseManager.client;
 
   Future<Map<String, dynamic>?> getUserProfile(String userId) async {
     try {

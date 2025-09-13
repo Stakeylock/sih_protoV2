@@ -30,8 +30,8 @@ class AppState with ChangeNotifier {
   }
 
   Future<void> _initializeApp() async {
-    await SupabaseConfig.initialize();
-    _currentUser = SupabaseConfig.client.auth.currentUser;
+    await SupabaseManager.initialize();
+    _currentUser = SupabaseManager.client.auth.currentUser;
     if (_currentUser != null) {
       await _ensureDigitalIdProvisioned();
       await _loadUserProfile(_currentUser!.id);
@@ -41,7 +41,7 @@ class AppState with ChangeNotifier {
     }
 
     // Listen to auth changes globally.[3]
-    SupabaseConfig.client.auth.onAuthStateChange.listen((data) async {
+    SupabaseManager.client.auth.onAuthStateChange.listen((data) async {
       final session = data.session;
       _currentUser = session?.user;
       if (_currentUser != null) {
@@ -58,7 +58,7 @@ class AppState with ChangeNotifier {
   }
 
   Future<void> _ensureDigitalIdProvisioned() async {
-    final user = SupabaseConfig.client.auth.currentUser;
+    final user = SupabaseManager.client.auth.currentUser;
     if (user == null) return;
     final existing = await _databaseService.getDigitalId(user.id);
     if (existing != null) return;
