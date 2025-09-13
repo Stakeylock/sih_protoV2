@@ -1,0 +1,14 @@
+[
+  {
+    "userId": "user-456",
+    "privateKeyB64": "DsiHoIQOiE5ox8Lbi9wCVHx88hFg0Hem4JzLn59Pe/j15NH0ddnpnfByWBEDWBFEP9C4kyOk/vT1qNF671RQcw=="
+  },
+  {
+    "userId": "user-123",
+    "privateKeyB64": "TyqrJ1b0MZv5gwKIRycniv8pJhWgKq6RT+dZeSDGr+REkpieXwuV1zW+zboLBot68bzIYSDmhuVKkiNtzwhiFA=="
+  },
+  {
+    "userId": "a2c4151b-03d7-4570-a1c6-c23af12ff97f",
+    "privateKeyB64": "pJz49o451PlKwsPWytBcGhZE/Fr1kPNNPwEVGTiXO/su5XYHR5qLWg/VwjsGEzRJgCC6rTBr69l4/xh/uI55FQ=="
+  }
+]

@@ -1,15 +1,19 @@
 import 'package:flutter/foundation.dart';
 import 'package:geolocator/geolocator.dart';
-import 'package:sih_proto/services/location_service.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../services/auth_service.dart';
 import '../services/database_service.dart';
+import '../services/digital_id_service.dart';
+import '../services/location_service.dart';
 import '../services/supabase_config.dart';
 
 class AppState with ChangeNotifier {
   final AuthService _authService = AuthService();
   final DatabaseService _databaseService = DatabaseService();
   final LocationService _locationService = LocationService();
+
+  // Configure where your Node API runs; move to env later.
+  static const String _didApiBase = 'http://localhost:8787';
 
   User? _currentUser;
   Map<String, dynamic>? _userProfile;
@@ -28,18 +32,20 @@ class AppState with ChangeNotifier {
   Future<void> _initializeApp() async {
     await SupabaseConfig.initialize();
     _currentUser = SupabaseConfig.client.auth.currentUser;
-
     if (_currentUser != null) {
+      await _ensureDigitalIdProvisioned();
       await _loadUserProfile(_currentUser!.id);
     } else {
       _isLoading = false;
       notifyListeners();
     }
 
-    SupabaseConfig.client.auth.onAuthStateChange.listen((data) {
+    // Listen to auth changes globally.[3]
+    SupabaseConfig.client.auth.onAuthStateChange.listen((data) async {
       final session = data.session;
       _currentUser = session?.user;
       if (_currentUser != null) {
+        await _ensureDigitalIdProvisioned();
         _loadUserProfile(_currentUser!.id);
       } else {
         _userProfile = null;
@@ -51,14 +57,24 @@ class AppState with ChangeNotifier {
     });
   }
 
+  Future<void> _ensureDigitalIdProvisioned() async {
+    final user = SupabaseConfig.client.auth.currentUser;
+    if (user == null) return;
+    final existing = await _databaseService.getDigitalId(user.id);
+    if (existing != null) return;
+    final issued = await issueDidFromApi(apiBase: _didApiBase, userId: user.id);
+    await _databaseService.upsertDigitalId(userId: user.id, id: issued);
+  }
+
   Future<void> _loadUserProfile(String userId) async {
     _isLoading = true;
     notifyListeners();
-
     try {
       _userProfile = await _databaseService.getUserProfile(userId);
       if (_userProfile != null && _userProfile!['role'] == 'Tourist') {
-        _locationService.startTracking(userId, _databaseService).listen((position) {
+        _locationService.startTracking(userId, _databaseService).listen((
+          position,
+        ) {
           _currentPosition = position;
           notifyListeners();
         });
@@ -81,8 +97,8 @@ class AppState with ChangeNotifier {
       await _authService.signUp(
         email: email,
         password: password,
-        role: role, 
-        fullName: fullName, 
+        role: role,
+        fullName: fullName,
       );
       return null;
     } on AuthException catch (e) {
@@ -120,4 +136,3 @@ class AppState with ChangeNotifier {
     await _authService.signOut();
   }
 }
-

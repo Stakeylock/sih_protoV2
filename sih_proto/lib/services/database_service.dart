@@ -1,18 +1,22 @@
 import 'package:flutter/foundation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'supabase_config.dart';
+import 'digital_id_service.dart';
 
 class DatabaseService {
   final SupabaseClient _client = SupabaseConfig.client;
 
   Future<Map<String, dynamic>?> getUserProfile(String userId) async {
     try {
-      final response =
-          await _client.from('profiles').select().eq('id', userId).single();
+      final response = await _client
+          .from('profiles')
+          .select()
+          .eq('id', userId)
+          .single();
       return response;
     } on PostgrestException catch (e) {
       if (e.code == 'PGRST116') {
-        debugPrint('User profile not yet available for $userId');
+        debugPrint('User profile not yet available for $userId'); // no row yet
         return null;
       }
       rethrow;
@@ -20,7 +24,9 @@ class DatabaseService {
   }
 
   Future<void> updateUserProfile(
-      String userId, Map<String, dynamic> updates) async {
+    String userId,
+    Map<String, dynamic> updates,
+  ) async {
     await _client.from('profiles').update(updates).eq('id', userId);
   }
 
@@ -52,14 +58,13 @@ class DatabaseService {
         'latitude': latitude,
         'longitude': longitude,
         'reported_by': userId,
-        'status': 'critical'
+        'status': 'critical',
       });
     } catch (e) {
       debugPrint('Error creating SOS incident: $e');
     }
   }
 
-  // New method to report an incident
   Future<void> reportIncident({
     required String title,
     required String description,
@@ -81,21 +86,45 @@ class DatabaseService {
     // In a real app, this would fetch from a 'safe_zones' table
     await Future.delayed(const Duration(seconds: 1)); // Simulate network delay
     return [
-      {'name': 'Main Police Station', 'latitude': 17.3850, 'longitude': 78.4867},
+      {
+        'name': 'Main Police Station',
+        'latitude': 17.3850,
+        'longitude': 78.4867,
+      },
       {'name': 'General Hospital', 'latitude': 17.4065, 'longitude': 78.4758},
-      {'name': 'Tourist Information Center', 'latitude': 17.3616, 'longitude': 78.4747},
+      {
+        'name': 'Tourist Information Center',
+        'latitude': 17.3616,
+        'longitude': 78.4747,
+      },
     ];
   }
 
-  // New method to get a user's digital ID
-  Future<Map<String, dynamic>?> getDigitalId(String userId) async {
-    try {
-      final response = await _client.from('digital_ids').select().eq('id', userId).single();
-      return response;
-    } catch (e) {
-      debugPrint("Could not fetch digital ID: $e");
-      return null;
-    }
+  Future<DigitalId?> getDigitalId(String userId) async {
+    final data = await _client
+        .from('digital_ids')
+        .select('did, method, public_key_multibase, key_type, issued_at')
+        .eq('id', userId) // was 'user_id'
+        .maybeSingle();
+    if (data == null) return null;
+    return DigitalId.fromMap(data);
+  }
+
+  Future<void> upsertDigitalId({
+    required String userId,
+    required DigitalId id,
+  }) async {
+    await _client
+        .from('digital_ids')
+        .upsert({
+          'id': userId, // was 'user_id'
+          'did': id.did,
+          'method': id.method,
+          'public_key_multibase': id.publicKeyMultibase,
+          'key_type': id.keyType,
+          'issued_at': id.issuedAt.toIso8601String(),
+        })
+        .select()
+        .maybeSingle();
   }
 }
-

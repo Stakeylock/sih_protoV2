@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import 'package:sih_proto/providers/app_state.dart';
 import 'package:sih_proto/services/database_service.dart';
+import 'package:sih_proto/services/digital_id_service.dart';
 import 'package:sih_proto/utils/app_theme.dart';
 
 class DigitalIdScreen extends StatelessWidget {
@@ -9,32 +11,47 @@ class DigitalIdScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final appState = Provider.of<AppState>(context, listen: false);
+    
+    final appState = Provider.of<AppState>(
+      context,
+      listen: false,
+    );
     final userId = appState.currentUser?.id;
+    
     final dbService = DatabaseService();
-
     return Scaffold(
       appBar: AppBar(title: const Text('Digital ID')),
       body: Padding(
         padding: const EdgeInsets.all(20.0),
         child: userId == null
             ? const Center(child: Text('User not found.'))
-            : FutureBuilder<Map<String, dynamic>?>(
+            : FutureBuilder<DigitalId?>(
                 future: dbService.getDigitalId(userId),
                 builder: (context, snapshot) {
-                  if (snapshot.connectionState == ConnectionState.waiting) {
+                  if (snapshot.connectionState != ConnectionState.done) {
                     return const Center(child: CircularProgressIndicator());
                   }
-                  if (snapshot.hasError || !snapshot.hasData || snapshot.data == null) {
-                    return const Center(child: Text('Could not load Digital ID.'));
+                  if (snapshot.hasError) {
+                    return const Center(
+                      child: Text('Could not load Digital ID.'),
+                    );
+                  }
+                  final id = snapshot.data;
+                  if (id == null) {
+                    return const Center(
+                      child: Text('Digital ID not issued yet.'),
+                    );
                   }
 
-                  final digitalId = snapshot.data!;
                   final userName = appState.userProfile?['full_name'] ?? 'N/A';
-                  
+                  final issued = id.issuedAt.toLocal().toString().substring(
+                    0,
+                    16,
+                  );
+
                   return Center(
                     child: AspectRatio(
-                      aspectRatio: 85.60 / 53.98, // Credit card aspect ratio
+                      aspectRatio: 85.60 / 53.98,
                       child: Container(
                         decoration: BoxDecoration(
                           borderRadius: BorderRadius.circular(20),
@@ -75,12 +92,56 @@ class DigitalIdScreen extends StatelessWidget {
                                 ),
                               ),
                               const SizedBox(height: 8),
-                              _buildIdRow('DOC TYPE', digitalId['document_type'] ?? 'N/A'),
-                              _buildIdRow('VALID UNTIL', digitalId['valid_until'] != null ? digitalId['valid_until'].toString().substring(0, 10) : 'N/A'),
+                              _buildRow('DOC TYPE', id.method.toUpperCase()),
+                              _buildRow('KEY TYPE', id.keyType),
+                              _buildRow('ISSUED AT', issued),
+                              const SizedBox(height: 8),
+                              Row(
+                                crossAxisAlignment: CrossAxisAlignment.center,
+                                children: [
+                                  Expanded(
+                                    child: Text(
+                                      id.did,
+                                      maxLines: 2,
+                                      overflow: TextOverflow.ellipsis,
+                                      style: const TextStyle(
+                                        color: AppTheme.primaryColor,
+                                        fontWeight: FontWeight.w600,
+                                        fontSize: 12,
+                                      ),
+                                    ),
+                                  ),
+                                  IconButton(
+                                    icon: const Icon(
+                                      Icons.copy,
+                                      color: AppTheme.primaryColor,
+                                      size: 18,
+                                    ),
+                                    onPressed: () async {
+                                      await Clipboard.setData(
+                                        ClipboardData(text: id.did),
+                                      );
+                                      if (context.mounted) {
+                                        ScaffoldMessenger.of(
+                                          context,
+                                        ).showSnackBar(
+                                          const SnackBar(
+                                            content: Text('DID copied'),
+                                          ),
+                                        );
+                                      }
+                                    },
+                                  ),
+                                ],
+                              ),
                               const Spacer(),
                               const Align(
                                 alignment: Alignment.bottomRight,
-                                child: Icon(Icons.qr_code_2, size: 40, color: AppTheme.primaryColor),
+                                child: Icon(
+                                  Icons.qr_code_2,
+                                  size: 40,
+                                  color: AppTheme.primaryColor,
+                                ),
                               ),
                             ],
                           ),
@@ -94,7 +155,7 @@ class DigitalIdScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildIdRow(String title, String value) {
+  Widget _buildRow(String title, String value) {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
@@ -105,16 +166,20 @@ class DigitalIdScreen extends StatelessWidget {
             fontSize: 12,
           ),
         ),
-        Text(
-          value,
-          style: const TextStyle(
-            color: AppTheme.primaryColor,
-            fontWeight: FontWeight.w600,
-            fontSize: 14,
+        Flexible(
+          child: Text(
+            value,
+            textAlign: TextAlign.right,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: const TextStyle(
+              color: AppTheme.primaryColor,
+              fontWeight: FontWeight.w600,
+              fontSize: 14,
+            ),
           ),
         ),
       ],
     );
   }
 }
-

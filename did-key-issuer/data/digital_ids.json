@@ -1,0 +1,29 @@
+[
+  {
+    "userId": "user-456",
+    "did": "did:key:z6Mkw18JRDhxUwogvjVDbHfeRgQwK6b51hkfnsrsNH9JvdRU",
+    "method": "did:key",
+    "publicKeyMultibase": "z6Mkw18JRDhxUwogvjVDbHfeRgQwK6b51hkfnsrsNH9JvdRU",
+    "keyType": "Ed25519",
+    "issuedAt": "2025-09-13T05:09:35.752Z",
+    "status": "active"
+  },
+  {
+    "userId": "user-123",
+    "did": "did:key:z6Mkj4wRGr3HHAaHYqTViUMFvuhnPWZgZKCHY8nh2iEoYjMD",
+    "method": "did:key",
+    "publicKeyMultibase": "z6Mkj4wRGr3HHAaHYqTViUMFvuhnPWZgZKCHY8nh2iEoYjMD",
+    "keyType": "Ed25519",
+    "issuedAt": "2025-09-13T05:10:35.516Z",
+    "status": "active"
+  },
+  {
+    "userId": "a2c4151b-03d7-4570-a1c6-c23af12ff97f",
+    "did": "did:key:z6MkhcKjeTrvBrsc17XMY62XSTVFr255Q7Xb11bQFRV88Xpp",
+    "method": "did:key",
+    "publicKeyMultibase": "z6MkhcKjeTrvBrsc17XMY62XSTVFr255Q7Xb11bQFRV88Xpp",
+    "keyType": "Ed25519",
+    "issuedAt": "2025-09-13T16:44:03.681Z",
+    "status": "active"
+  }
+]
