@@ -3,6 +3,7 @@ import 'package:flutter_svg/flutter_svg.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:provider/provider.dart';
 import 'package:sih_proto/providers/app_state.dart';
+import 'package:sih_proto/screens/chat_screen.dart';
 import 'package:sih_proto/screens/digital_id_screen.dart';
 import 'package:sih_proto/screens/live_map_screen.dart';
 import 'package:sih_proto/screens/notifications_screen.dart';
@@ -225,9 +226,8 @@ class _FeaturesGrid extends StatelessWidget {
         _FeatureCard(
           title: 'Help & Support',
           iconSvg: CustomIcons.help,
-          onTap: () {
-            // Placeholder for Help & Support
-          },
+          onTap: () => Navigator.push(context,
+              MaterialPageRoute(builder: (_) => const ChatScreen())),
         ),
       ],
     );

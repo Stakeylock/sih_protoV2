@@ -12,6 +12,8 @@ import 'package:sih_proto/screens/tourist_dashboard.dart';
 import 'package:sih_proto/services/supabase_config.dart';
 import 'package:sih_proto/utils/app_theme.dart';
 
+import 'package:sih_proto/screens/chat_screen.dart';
+
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await dotenv.load(fileName: '.env');
@@ -39,6 +41,7 @@ class SihProtoApp extends StatelessWidget {
           '/tourist-dashboard': (context) => const TouristDashboard(),
           '/admin-dashboard': (context) => const AdminDashboardScreen(),
           '/police-dashboard': (context) => const PoliceDashboard(),
+          '/chat': (context) => const ChatScreen(),
         },
       ),
     );
