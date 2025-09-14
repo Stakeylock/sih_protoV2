@@ -127,4 +127,30 @@ class DatabaseService {
         .select()
         .maybeSingle();
   }
+
+  Future<Map<String, dynamic>?> getKycInfo(String userId) async {
+    final data = await _client
+        .from('kyc_info')
+        .select(
+          'id, doc_type_uploaded, full_name_ext, dob_ext, id_num_ext, is_verified',
+        )
+        .eq('id', userId) // change to .eq('user_id', userId) if needed
+        .maybeSingle();
+    return data;
+  }
+
+  Future<void> upsertKycDraft({
+    required String userId,
+    required String docTypeUploaded,
+  }) async {
+    await _client
+        .from('kyc_info')
+        .upsert({
+          'id': userId, // or user_id: userId
+          'doc_type_uploaded': docTypeUploaded,
+          'is_verified': false,
+        })
+        .select()
+        .maybeSingle();
+  }
 }
