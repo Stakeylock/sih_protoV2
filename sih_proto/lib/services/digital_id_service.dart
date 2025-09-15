@@ -1,51 +1,57 @@
+// lib/services/digital_id_service.dart
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 
-class DigitalId {
-  final String did;
-  final String method;
-  final String publicKeyMultibase;
-  final String keyType;
-  final DateTime issuedAt;
+/// Thin service that calls the external Digital ID issuance API.
+/// Returns a plain Map<String, dynamic> with keys compatible with your DB:
+/// { did, method, public_key_multibase, key_type, issued_at }
+class DigitalIdService {
+  const DigitalIdService();
 
-  DigitalId({
-    required this.did,
-    required this.method,
-    required this.publicKeyMultibase,
-    required this.keyType,
-    required this.issuedAt,
-  });
+  /// Issues a new Digital ID for the given user.
+  ///
+  /// Expects the backend to:
+  /// - accept POST at `$apiBase/issue-did`
+  /// - body: { user_id: string }
+  /// - return 200 with JSON: { did, method, public_key_multibase, key_type, issued_at }
+  ///
+  /// Throws on non-200 or invalid JSON.
+  Future<Map<String, dynamic>> issueNewDid({
+    required String apiBase,
+    required String userId,
+  }) async {
+    final uri = Uri.parse('$apiBase/issue-did');
+    final headers = <String, String>{
+      'Content-Type': 'application/json',
+      'Accept': 'application/json',
+    };
+    final body = json.encode({'user_id': userId});
 
-  // Map rows from Supabase (snake_case) to model.
-  factory DigitalId.fromMap(Map<String, dynamic> m) => DigitalId(
-    did: m['did'] as String,
-    method: m['method'] as String,
-    publicKeyMultibase: m['public_key_multibase'] as String,
-    keyType: m['key_type'] as String,
-    issuedAt: DateTime.parse(m['issued_at'] as String),
-  );
-}
+    final resp = await http.post(uri, headers: headers, body: body);
+    if (resp.statusCode != 200) {
+      throw Exception('Issue DID failed (${resp.statusCode}): ${resp.body}');
+    }
 
-// Call external Node API to issue a DID (camelCase response).
-Future<DigitalId> issueDidFromApi({
-  required String apiBase, // e.g., http://localhost:8787
-  required String userId,
-}) async {
-  final uri = Uri.parse('$apiBase/issue-did');
-  final res = await http.post(
-    uri,
-    headers: {'content-type': 'application/json'},
-    body: jsonEncode({'userId': userId}),
-  );
-  if (res.statusCode != 200) {
-    throw Exception('Issue DID failed: ${res.statusCode} ${res.body}');
+    Map<String, dynamic> jsonMap;
+    try {
+      jsonMap = json.decode(resp.body) as Map<String, dynamic>;
+    } catch (e) {
+      throw Exception('Invalid JSON from issue-did API: $e');
+    }
+
+    // Basic shape validation to fail fast if backend changes
+    for (final k in const [
+      'did',
+      'method',
+      'public_key_multibase',
+      'key_type',
+      'issued_at',
+    ]) {
+      if (!jsonMap.containsKey(k)) {
+        throw Exception('Missing key "$k" in issue-did response');
+      }
+    }
+
+    return jsonMap;
   }
-  final m = jsonDecode(res.body) as Map<String, dynamic>;
-  return DigitalId(
-    did: m['did'] as String,
-    method: m['method'] as String,
-    publicKeyMultibase: m['publicKeyMultibase'] as String, // API camelCase
-    keyType: m['keyType'] as String, // API camelCase
-    issuedAt: DateTime.parse(m['issuedAt'] as String), // API camelCase
-  );
 }

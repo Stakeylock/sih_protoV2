@@ -1,17 +1,22 @@
-import 'dart:typed_data'; // for web/mobile byte handling
-import 'package:image_picker/image_picker.dart'; // camera/gallery picker
-import 'package:supabase_flutter/supabase_flutter.dart'; // for later integration
-import 'package:flutter/foundation.dart' show kIsWeb; // web detection
+import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:provider/provider.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
+
 import 'package:sih_proto/providers/app_state.dart';
 import 'package:sih_proto/services/database_service.dart';
-import 'package:sih_proto/services/digital_id_service.dart';
 import 'package:sih_proto/utils/app_theme.dart';
 import 'package:sih_proto/repositories/kyc_repository.dart';
 import 'package:sih_proto/services/kyc_api.dart';
+
+// QR package
+import 'package:qr_flutter/qr_flutter.dart';
+
+// Bring the DigitalId model type from DatabaseService (or move to models/)
+import 'package:sih_proto/services/database_service.dart' show DigitalId;
 
 class DigitalIdScreen extends StatelessWidget {
   const DigitalIdScreen({super.key});
@@ -21,6 +26,7 @@ class DigitalIdScreen extends StatelessWidget {
     final appState = Provider.of<AppState>(context, listen: false);
     final userId = appState.currentUser?.id;
     final dbService = DatabaseService();
+
     return Scaffold(
       appBar: AppBar(title: const Text('Digital ID')),
       body: Padding(
@@ -30,6 +36,7 @@ class DigitalIdScreen extends StatelessWidget {
             : FutureBuilder<DigitalId?>(
                 future: dbService.getDigitalId(userId),
                 builder: (context, snapshot) {
+                  // Proper FutureBuilder handling: show progress, error, empty, data
                   if (snapshot.connectionState != ConnectionState.done) {
                     return const Center(child: CircularProgressIndicator());
                   }
@@ -38,6 +45,7 @@ class DigitalIdScreen extends StatelessWidget {
                       child: Text('Could not load Digital ID.'),
                     );
                   }
+
                   final id = snapshot.data;
                   if (id == null) {
                     return const Center(
@@ -45,16 +53,15 @@ class DigitalIdScreen extends StatelessWidget {
                     );
                   }
 
-                  final userName = appState.userProfile?['full_name'] ?? 'N/A';
-                  final issued = id.issuedAt.toLocal().toString().substring(
-                    0,
-                    16,
-                  );
+                  final userName =
+                      appState.userProfile?['full_name']?.toString() ?? 'N/A';
+                  final issued =
+                      id.issuedAt.toLocal().toString().substring(0, 16);
 
                   return SingleChildScrollView(
                     child: Column(
                       children: [
-                        // Digital ID card (unchanged)
+                        // Digital ID card with live QR
                         Center(
                           child: AspectRatio(
                             aspectRatio: 85.60 / 53.98,
@@ -68,9 +75,8 @@ class DigitalIdScreen extends StatelessWidget {
                                 ),
                                 boxShadow: [
                                   BoxShadow(
-                                    color: AppTheme.accentColor.withOpacity(
-                                      0.3,
-                                    ),
+                                    color:
+                                        AppTheme.accentColor.withOpacity(0.3),
                                     blurRadius: 20,
                                     offset: const Offset(0, 10),
                                   ),
@@ -78,85 +84,12 @@ class DigitalIdScreen extends StatelessWidget {
                               ),
                               child: Padding(
                                 padding: const EdgeInsets.all(20.0),
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Text(
-                                      'TOURIST DIGITAL ID',
-                                      style: TextStyle(
-                                        color: AppTheme.primaryColor
-                                            .withOpacity(0.7),
-                                        letterSpacing: 2,
-                                        fontWeight: FontWeight.bold,
-                                      ),
-                                    ),
-                                    const Spacer(),
-                                    Text(
-                                      userName.toUpperCase(),
-                                      style: const TextStyle(
-                                        color: AppTheme.primaryColor,
-                                        fontSize: 22,
-                                        fontWeight: FontWeight.bold,
-                                        letterSpacing: 1.5,
-                                      ),
-                                    ),
-                                    const SizedBox(height: 8),
-                                    _buildRow(
-                                      'DOC TYPE',
-                                      id.method.toUpperCase(),
-                                    ),
-                                    _buildRow('KEY TYPE', id.keyType),
-                                    _buildRow('ISSUED AT', issued),
-                                    const SizedBox(height: 8),
-                                    Row(
-                                      crossAxisAlignment:
-                                          CrossAxisAlignment.center,
-                                      children: [
-                                        Expanded(
-                                          child: Text(
-                                            id.did,
-                                            maxLines: 2,
-                                            overflow: TextOverflow.ellipsis,
-                                            style: const TextStyle(
-                                              color: AppTheme.primaryColor,
-                                              fontWeight: FontWeight.w600,
-                                              fontSize: 12,
-                                            ),
-                                          ),
-                                        ),
-                                        IconButton(
-                                          icon: const Icon(
-                                            Icons.copy,
-                                            color: AppTheme.primaryColor,
-                                            size: 18,
-                                          ),
-                                          onPressed: () async {
-                                            await Clipboard.setData(
-                                              ClipboardData(text: id.did),
-                                            );
-                                            if (context.mounted) {
-                                              ScaffoldMessenger.of(
-                                                context,
-                                              ).showSnackBar(
-                                                const SnackBar(
-                                                  content: Text('DID copied'),
-                                                ),
-                                              );
-                                            }
-                                          },
-                                        ),
-                                      ],
-                                    ),
-                                    const Spacer(),
-                                    const Align(
-                                      alignment: Alignment.bottomRight,
-                                      child: Icon(
-                                        Icons.qr_code_2,
-                                        size: 40,
-                                        color: AppTheme.primaryColor,
-                                      ),
-                                    ),
-                                  ],
+                                child: _DigitalIdCardContent(
+                                  userName: userName,
+                                  docType: id.method.toUpperCase(),
+                                  keyType: id.keyType,
+                                  issuedAt: issued,
+                                  did: id.did,
                                 ),
                               ),
                             ),
@@ -165,7 +98,7 @@ class DigitalIdScreen extends StatelessWidget {
 
                         const SizedBox(height: 24),
 
-                        // KYC section under the ID card
+                        // KYC section
                         FutureBuilder<Map<String, dynamic>?>(
                           future: dbService.getUserProfile(userId),
                           builder: (context, profSnap) {
@@ -173,6 +106,7 @@ class DigitalIdScreen extends StatelessWidget {
                                 ConnectionState.done) {
                               return const SizedBox.shrink();
                             }
+
                             final profile = profSnap.data ?? {};
                             final isVerified = profile['is_verified'] == true;
 
@@ -190,12 +124,19 @@ class DigitalIdScreen extends StatelessWidget {
                                     ConnectionState.done) {
                                   return const SizedBox.shrink();
                                 }
+
                                 final info = kycSnap.data ?? {};
                                 return VerifiedKycCard(
-                                  docType: info['doc_type_uploaded'] ?? 'N/A',
-                                  name: info['full_name_ext'] ?? 'N/A',
-                                  dob: (info['dob_ext'] ?? 'N/A').toString(),
-                                  idNum: info['id_num_ext'] ?? 'N/A',
+                                  docType:
+                                      info['doc_type_uploaded']?.toString() ??
+                                          'N/A',
+                                  name:
+                                      info['full_name_ext']?.toString() ??
+                                          'N/A',
+                                  dob:
+                                      (info['dob_ext'] ?? 'N/A').toString(),
+                                  idNum:
+                                      info['id_num_ext']?.toString() ?? 'N/A',
                                 );
                               },
                             );
@@ -210,14 +151,15 @@ class DigitalIdScreen extends StatelessWidget {
     );
   }
 
-  // KYC Modal Bottom Sheet
-  Future<void> _openKycBottomSheet(BuildContext context, String userId) async {
+  Future<void> _openKycBottomSheet(
+      BuildContext context, String userId) async {
     await showModalBottomSheet(
       context: context,
       isScrollControlled: true,
       useSafeArea: true,
       builder: (ctx) => Padding(
-        padding: EdgeInsets.only(bottom: MediaQuery.of(ctx).viewInsets.bottom),
+        padding:
+            EdgeInsets.only(bottom: MediaQuery.of(ctx).viewInsets.bottom),
         child: KycWizard(
           userId: userId,
           onSubmitted: () {
@@ -236,36 +178,195 @@ class DigitalIdScreen extends StatelessWidget {
   }
 }
 
-// Stateless helpers remain
-Widget _buildRow(String title, String value) {
-  return Row(
-    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-    children: [
-      Text(
-        title,
-        style: TextStyle(
-          color: AppTheme.primaryColor.withOpacity(0.7),
-          fontSize: 12,
+// ===================== Card Content with QR ======================
+
+class _DigitalIdCardContent extends StatefulWidget {
+  final String userName;
+  final String docType;
+  final String keyType;
+  final String issuedAt;
+  final String did;
+
+  const _DigitalIdCardContent({
+    required this.userName,
+    required this.docType,
+    required this.keyType,
+    required this.issuedAt,
+    required this.did,
+  });
+
+  @override
+  State<_DigitalIdCardContent> createState() =>
+      _DigitalIdCardContentState();
+}
+
+class _DigitalIdCardContentState extends State<_DigitalIdCardContent> {
+  // RepaintBoundary key for export (share/save later)
+  final GlobalKey _qrBoundaryKey = GlobalKey();
+
+  String _qrData() {
+    // Simple: encode DID directly or a verify URL stub
+    // return 'https://verify.example.com/did/${widget.did}';
+    return widget.did;
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'TOURIST DIGITAL ID',
+          style: TextStyle(
+            color: AppTheme.primaryColor.withOpacity(0.7),
+            letterSpacing: 2,
+            fontWeight: FontWeight.bold,
+          ),
         ),
-      ),
-      Flexible(
-        child: Text(
-          value,
-          textAlign: TextAlign.right,
-          maxLines: 1,
-          overflow: TextOverflow.ellipsis,
+        const Spacer(),
+        Text(
+          widget.userName.toUpperCase(),
           style: const TextStyle(
             color: AppTheme.primaryColor,
-            fontWeight: FontWeight.w600,
-            fontSize: 14,
+            fontSize: 22,
+            fontWeight: FontWeight.bold,
+            letterSpacing: 1.5,
+          ),
+        ),
+        const SizedBox(height: 8),
+        _buildRow('DOC TYPE', widget.docType),
+        _buildRow('KEY TYPE', widget.keyType),
+        _buildRow('ISSUED AT', widget.issuedAt),
+        const SizedBox(height: 8),
+        Row(
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
+            Expanded(
+              child: Text(
+                widget.did,
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+                style: const TextStyle(
+                  color: AppTheme.primaryColor,
+                  fontWeight: FontWeight.w600,
+                  fontSize: 12,
+                ),
+              ),
+            ),
+            IconButton(
+              icon: const Icon(
+                Icons.copy,
+                color: AppTheme.primaryColor,
+                size: 18,
+              ),
+              onPressed: () async {
+                await Clipboard.setData(ClipboardData(text: widget.did));
+                if (!mounted) return;
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text('DID copied')),
+                );
+              },
+            ),
+          ],
+        ),
+        const Spacer(),
+        // High-contrast, padded QR area replacing static icon
+        Align(
+          alignment: Alignment.bottomRight,
+          child: _QrFramed(
+            boundaryKey: _qrBoundaryKey,
+            qrData: _qrData(),
+            size: 88, // ~72–96 recommended on a card
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildRow(String title, String value) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        Text(
+          title,
+          style: TextStyle(
+            color: AppTheme.primaryColor.withOpacity(0.7),
+            fontSize: 12,
+          ),
+        ),
+        Flexible(
+          child: Text(
+            value,
+            textAlign: TextAlign.right,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: const TextStyle(
+              color: AppTheme.primaryColor,
+              fontWeight: FontWeight.w600,
+              fontSize: 14,
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+// A framed QR widget that ensures contrast and exportability
+class _QrFramed extends StatelessWidget {
+  final GlobalKey boundaryKey;
+  final String qrData;
+  final double size;
+
+  const _QrFramed({
+    required this.boundaryKey,
+    required this.qrData,
+    required this.size,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    // White background and subtle border increase contrast over gradient
+    return RepaintBoundary(
+      key: boundaryKey,
+      child: Container(
+        width: size,
+        height: size,
+        padding: const EdgeInsets.all(6), // inner padding for quiet zone
+        decoration: BoxDecoration(
+          color: Colors.white, // light background for scanning contrast
+          borderRadius: BorderRadius.circular(10),
+          border: Border.all(color: Colors.white, width: 2),
+          boxShadow: [
+            BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 4),
+          ],
+        ),
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(6),
+          child: ColoredBox(
+            color: Colors.white, // ensure QR background stays light
+            child: QrImageView(
+              data: qrData,
+              version: QrVersions.auto,
+              gapless: false,
+              backgroundColor: Colors.white,
+              errorStateBuilder: (cxt, err) => const Center(
+                child: Text(
+                  'QR unavailable',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(fontSize: 10),
+                ),
+              ),
+            ),
           ),
         ),
       ),
-    ],
-  );
+    );
+  }
 }
 
-// KYC CTA card for unverified users
+// ===================== KYC components ======================
+
 class KYCStatusCard extends StatelessWidget {
   final VoidCallback onStart;
   const KYCStatusCard({super.key, required this.onStart});
@@ -315,13 +416,11 @@ class KYCStatusCard extends StatelessWidget {
   }
 }
 
-// Verified KYC display
 class VerifiedKycCard extends StatelessWidget {
   final String docType;
   final String name;
   final String dob;
   final String idNum;
-
   const VerifiedKycCard({
     super.key,
     required this.docType,
@@ -362,7 +461,7 @@ class VerifiedKycCard extends StatelessWidget {
     );
   }
 
-  Widget _kv(String k, String v) {
+  static Widget _kv(String k, String v) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 8),
       child: Row(
@@ -382,11 +481,11 @@ class VerifiedKycCard extends StatelessWidget {
   }
 }
 
-// KYC modal wizard
+// ===================== KYC Wizard ======================
+
 class KycWizard extends StatefulWidget {
   final String userId;
   final VoidCallback onSubmitted;
-
   const KycWizard({super.key, required this.userId, required this.onSubmitted});
 
   @override
@@ -399,8 +498,8 @@ class _KycWizardState extends State<KycWizard> {
   Uint8List? selfieBytes;
   bool submitting = false;
 
-  final ImagePicker _picker = ImagePicker(); // camera/gallery
-  final _formKey = GlobalKey<FormState>(); // for Step 1 validation [9]
+  final ImagePicker _picker = ImagePicker();
+  final _formKey = GlobalKey<FormState>();
   final _docTypeCtrl = TextEditingController();
 
   @override
@@ -445,7 +544,7 @@ class _KycWizardState extends State<KycWizard> {
 
   Widget _idStep() {
     return Form(
-      key: _formKey, // validate before continue [9]
+      key: _formKey,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -459,9 +558,10 @@ class _KycWizardState extends State<KycWizard> {
               prefixIcon: Icon(Icons.badge),
               border: OutlineInputBorder(),
             ),
-            validator: (v) => (v == null || v.trim().isEmpty)
-                ? 'Please enter the document type'
-                : null,
+            validator: (v) =>
+                (v == null || v.trim().isEmpty)
+                    ? 'Please enter the document type'
+                    : null,
           ),
           const SizedBox(height: 12),
           _imageBox(idImageBytes, placeholder: 'No ID selected'),
@@ -490,17 +590,14 @@ class _KycWizardState extends State<KycWizard> {
               onPressed: (idImageBytes == null)
                   ? null
                   : () async {
-                      if (!_formKey.currentState!.validate())
-                        return; // require doc type [9]
+                      if (!_formKey.currentState!.validate()) return;
                       setState(() => submitting = true);
-                      // TODO: send docType + ID image to backend
-                      // await DatabaseService().upsertKycDraft(userId: widget.userId, docTypeUploaded: _docTypeCtrl.text.trim());
                       await Future.delayed(const Duration(milliseconds: 600));
                       setState(() {
                         submitting = false;
                         step = 1;
                       });
-                    },
+                  },
               child: submitting
                   ? const SizedBox(
                       height: 20,
@@ -549,18 +646,11 @@ class _KycWizardState extends State<KycWizard> {
                 : () async {
                     setState(() => submitting = true);
                     try {
-                      // Pick the right base URL per runtime:
-                      // - Web/desktop: http://localhost:5005
-                      // - Android emulator: http://10.0.2.2:5005
-                      // - Physical device: http://<PC-LAN-IP>:5005
-                      const apiBase =
-                          'http://localhost:5005'; // change if needed [18]
-
+                      const apiBase = 'http://localhost:5005';
                       final repo = KycRepository(
                         api: KycApi(apiBase),
                         supabase: Supabase.instance.client,
                       );
-
                       final outcome = await repo.verifyAndPersist(
                         userId: widget.userId,
                         idBytes: idImageBytes!,
@@ -568,8 +658,7 @@ class _KycWizardState extends State<KycWizard> {
                         selfieBytes: selfieBytes!,
                         selfieFilename: 'selfie.jpg',
                         docType: _docTypeCtrl.text.trim(),
-                      ); // handles multipart + Supabase updates [1][16][12]
-
+                      );
                       if (!mounted) return;
                       ScaffoldMessenger.of(context).showSnackBar(
                         SnackBar(
@@ -582,14 +671,13 @@ class _KycWizardState extends State<KycWizard> {
                       );
                     } catch (e) {
                       if (!mounted) return;
-                      ScaffoldMessenger.of(
-                        context,
-                      ).showSnackBar(SnackBar(content: Text('KYC failed: $e')));
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(content: Text('KYC failed: $e')),
+                      );
                     } finally {
                       if (!mounted) return;
                       setState(() => submitting = false);
-                      widget
-                          .onSubmitted(); // closes sheet and returns to screen
+                      widget.onSubmitted();
                     }
                   },
             child: submitting
@@ -634,9 +722,7 @@ class _KycWizardState extends State<KycWizard> {
     required bool fromCamera,
   }) async {
     try {
-      final source = fromCamera
-          ? ImageSource.camera
-          : ImageSource.gallery; // both supported
+      final source = fromCamera ? ImageSource.camera : ImageSource.gallery;
       final XFile? file = await _picker.pickImage(
         source: source,
         maxWidth: 1600,
@@ -668,7 +754,6 @@ class _KycWizardState extends State<KycWizard> {
 class StepperHeader extends StatelessWidget {
   final int current;
   final int total;
-
   const StepperHeader({super.key, required this.current, required this.total});
 
   @override
