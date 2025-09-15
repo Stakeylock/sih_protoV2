@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
-// This class models the data for an incident.
 class Incident {
   final String id;
   final String title;
@@ -19,16 +18,12 @@ class Incident {
     required this.status,
   });
 
-  // This factory constructor safely creates an Incident from JSON data.
   factory Incident.fromJson(Map<String, dynamic> json) {
     return Incident(
-      // Safely convert potential numeric IDs and other values to String
       id: json['id']?.toString() ?? 'N/A',
       title: json['title']?.toString() ?? 'No Title',
       description: json['description']?.toString() ?? 'No Description',
       severity: json['severity']?.toString() ?? 'Unknown',
-      // Note: Supabase often uses snake_case for column names.
-      // This handles both 'reportedAt' and 'reported_at' keys.
       reportedAt: json['reportedAt']?.toString() ?? json['reported_at']?.toString() ?? 'Unknown Time',
       status: json['status']?.toString() ?? 'Open',
     );
@@ -43,7 +38,6 @@ class PoliceDashboard extends StatefulWidget {
 }
 
 class _PoliceDashboardState extends State<PoliceDashboard> {
-  // State variables for interactivity
   bool _isLoading = true;
   String _selectedStatusFilter = 'All';
   List<Incident> _incidents = [];
@@ -58,14 +52,12 @@ class _PoliceDashboardState extends State<PoliceDashboard> {
     _supabase = Supabase.instance.client;
     _fetchIncidents();
 
-    // Set up Supabase real-time subscription with the corrected syntax.
     _incidentChannel = _supabase.channel('public:incidents');
     _incidentChannel!.onPostgresChanges(
       event: PostgresChangeEvent.all,
       schema: 'public',
       table: 'incidents',
       callback: (payload) {
-        // Refetch incidents when any change occurs in the database table.
         _fetchIncidents();
       },
     ).subscribe();
@@ -73,16 +65,13 @@ class _PoliceDashboardState extends State<PoliceDashboard> {
 
   @override
   void dispose() {
-    // It's crucial to remove the channel subscription when the widget is disposed to prevent memory leaks.
     if (_incidentChannel != null) {
       _supabase.removeChannel(_incidentChannel!);
     }
     super.dispose();
   }
 
-  // Fetches all incidents from the database
   Future<void> _fetchIncidents() async {
-    // Only show the main loading indicator on the first load.
     if (_incidents.isEmpty) {
       setState(() {
         _isLoading = true;
@@ -91,7 +80,7 @@ class _PoliceDashboardState extends State<PoliceDashboard> {
 
     final response = await _supabase.from('incidents').select().order('id', ascending: false);
 
-    if (mounted) { // Check if the widget is still in the widget tree before updating state.
+    if (mounted) {
       setState(() {
         _incidents = (response as List).map((e) => Incident.fromJson(e)).toList();
         _isLoading = false;
@@ -99,44 +88,32 @@ class _PoliceDashboardState extends State<PoliceDashboard> {
     }
   }
 
-  // --- ⬇️ UPDATED CODE SECTION ⬇️ ---
-  // Updates the status of a specific incident with an optimistic UI update
   Future<void> _updateIncidentStatus(String id, String status) async {
-    // --- 1. Find the incident and its original state ---
     final incidentIndex = _incidents.indexWhere((i) => i.id == id);
     if (incidentIndex == -1) {
-      // If for some reason the incident isn't in the list, do nothing.
       return;
     }
-    // Keep a copy of the original incident in case we need to revert the change.
     final originalIncident = _incidents[incidentIndex];
 
-    // Create the new incident object with the updated status.
     final updatedIncident = Incident(
       id: originalIncident.id,
       title: originalIncident.title,
       description: originalIncident.description,
       severity: originalIncident.severity,
       reportedAt: originalIncident.reportedAt,
-      status: status, // Use the new status here
+      status: status,
     );
 
-    // --- 2. Perform the Optimistic UI Update ---
-    // Update the local list immediately and rebuild the UI.
     setState(() {
       _incidents[incidentIndex] = updatedIncident;
     });
 
-    // --- 3. Sync with the Backend ---
     try {
-      // Send the update request to the Supabase database.
       await _supabase.from('incidents').update({'status': status}).eq('id', id);
     } catch (error) {
-      // --- 4. Handle Errors ---
-      // If the database update fails, revert the UI change and notify the user.
       if (mounted) {
         setState(() {
-          _incidents[incidentIndex] = originalIncident; // Put the old one back
+          _incidents[incidentIndex] = originalIncident;
         });
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -147,9 +124,7 @@ class _PoliceDashboardState extends State<PoliceDashboard> {
       }
     }
   }
-  // --- ⬆️ END OF UPDATED CODE SECTION ⬆️ ---
 
-  // A computed property that returns a list of incidents based on the current filter.
   List<Incident> get _filteredIncidents {
     if (_selectedStatusFilter == 'All') {
       return _incidents;
@@ -159,7 +134,6 @@ class _PoliceDashboardState extends State<PoliceDashboard> {
 
   @override
   Widget build(BuildContext context) {
-    // Calculate statistics based on the full list of incidents
     final closedCases = _incidents.where((i) => i.status == 'Closed').length;
     final activeUnits = _incidents.where((i) => i.status == 'Active').length;
 
@@ -172,9 +146,7 @@ class _PoliceDashboardState extends State<PoliceDashboard> {
         actions: [
           IconButton(
             icon: const Icon(Icons.logout, color: Colors.white),
-            onPressed: () {
-              // Handle logout
-            },
+            onPressed: () {},
           ),
         ],
       ),
@@ -202,7 +174,6 @@ class _PoliceDashboardState extends State<PoliceDashboard> {
     );
   }
 
-  // Builds the filter chips for incident status
   Widget _buildFilterChips() {
     return SizedBox(
       height: 40,
@@ -231,7 +202,6 @@ class _PoliceDashboardState extends State<PoliceDashboard> {
     );
   }
 
-  // Builds the list of incidents based on the filter
   Widget _buildIncidentList() {
     final incidentsToDisplay = _filteredIncidents;
 
@@ -263,10 +233,12 @@ class _PoliceDashboardState extends State<PoliceDashboard> {
     );
   }
 
-  // Builds a single tile for an incident
   Widget _buildIncidentTile(Incident incident) {
     final Color severityColor = incident.severity == 'High'
-        ? Colors.red : incident.severity == 'Medium' ? Colors.orange : Colors.green;
+        ? Colors.red
+        : incident.severity == 'Medium'
+            ? Colors.orange
+            : Colors.green;
 
     IconData statusIcon;
     Color statusColor;
@@ -348,7 +320,6 @@ class _PoliceDashboardState extends State<PoliceDashboard> {
     );
   }
 
-  // Builds the summary info cards at the top
   Widget _buildInfoCard(String title, String value, IconData icon, Color color) {
     return Card(
       color: const Color(0xFF2d3748),
