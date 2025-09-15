@@ -1,35 +1,37 @@
+// lib/services/database_service.dart
 import 'package:flutter/foundation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+
 import 'supabase_config.dart';
 import 'digital_id_service.dart';
 
 class DatabaseService {
   final SupabaseClient _client = SupabaseManager.client;
 
+  // Profiles
   Future<Map<String, dynamic>?> getUserProfile(String userId) async {
     try {
-      final response = await _client
+      final res = await _client
           .from('profiles')
           .select()
           .eq('id', userId)
-          .single();
-      return response;
+          .single(); // throws if >1 or 0 rows
+      return res;
     } on PostgrestException catch (e) {
+      // PGRST116: Results contain 0 rows (single)
       if (e.code == 'PGRST116') {
-        debugPrint('User profile not yet available for $userId'); // no row yet
+        debugPrint('User profile not yet available for $userId');
         return null;
       }
       rethrow;
     }
   }
 
-  Future<void> updateUserProfile(
-    String userId,
-    Map<String, dynamic> updates,
-  ) async {
+  Future<void> updateUserProfile(String userId, Map<String, dynamic> updates) async {
     await _client.from('profiles').update(updates).eq('id', userId);
   }
 
+  // Location tracking
   Future<void> updateUserLocation({
     required String userId,
     required double latitude,
@@ -46,6 +48,7 @@ class DatabaseService {
     }
   }
 
+  // Incidents
   Future<void> createSosIncident({
     required String userId,
     required double latitude,
@@ -81,31 +84,23 @@ class DatabaseService {
     });
   }
 
-  // New method to get safe zones (returns mock data for now)
+  // Safe zones (placeholder)
   Future<List<Map<String, dynamic>>> getSafeZones() async {
-    // In a real app, this would fetch from a 'safe_zones' table
-    await Future.delayed(const Duration(seconds: 1)); // Simulate network delay
+    await Future.delayed(const Duration(seconds: 1));
     return [
-      {
-        'name': 'Main Police Station',
-        'latitude': 17.3850,
-        'longitude': 78.4867,
-      },
+      {'name': 'Main Police Station', 'latitude': 17.3850, 'longitude': 78.4867},
       {'name': 'General Hospital', 'latitude': 17.4065, 'longitude': 78.4758},
-      {
-        'name': 'Tourist Information Center',
-        'latitude': 17.3616,
-        'longitude': 78.4747,
-      },
+      {'name': 'Tourist Information Center', 'latitude': 17.3616, 'longitude': 78.4747},
     ];
   }
 
+  // Digital ID
   Future<DigitalId?> getDigitalId(String userId) async {
     final data = await _client
         .from('digital_ids')
         .select('did, method, public_key_multibase, key_type, issued_at')
-        .eq('id', userId) // was 'user_id'
-        .maybeSingle();
+        .eq('id', userId)
+        .maybeSingle(); // 0 or 1 row
     if (data == null) return null;
     return DigitalId.fromMap(data);
   }
@@ -117,7 +112,7 @@ class DatabaseService {
     await _client
         .from('digital_ids')
         .upsert({
-          'id': userId, // was 'user_id'
+          'id': userId,
           'did': id.did,
           'method': id.method,
           'public_key_multibase': id.publicKeyMultibase,
@@ -128,13 +123,12 @@ class DatabaseService {
         .maybeSingle();
   }
 
+  // KYC
   Future<Map<String, dynamic>?> getKycInfo(String userId) async {
     final data = await _client
         .from('kyc_info')
-        .select(
-          'id, doc_type_uploaded, full_name_ext, dob_ext, id_num_ext, is_verified',
-        )
-        .eq('id', userId) // change to .eq('user_id', userId) if needed
+        .select('id, doc_type_uploaded, full_name_ext, dob_ext, id_num_ext, is_verified')
+        .eq('id', userId)
         .maybeSingle();
     return data;
   }
@@ -146,11 +140,44 @@ class DatabaseService {
     await _client
         .from('kyc_info')
         .upsert({
-          'id': userId, // or user_id: userId
+          'id': userId,
           'doc_type_uploaded': docTypeUploaded,
           'is_verified': false,
         })
         .select()
         .maybeSingle();
+  }
+
+  // Admin: spots with checkpoints (nested select)
+  Future<List<Map<String, dynamic>>> getSpotsWithCheckpoints() async {
+    // Requires FK: tourist_spot_checkpoints.spot_id -> tourist_spots.spot_id
+    final rows = await _client
+        .from('tourist_spots')
+        .select('''
+          spot_id,
+          spot_name,
+          spot_location,
+          no_of_checkpoints,
+          tourist_spot_checkpoints:tourist_spot_checkpoints (
+            checkpoint_id,
+            checkpoint_number,
+            created_at,
+            spot_id
+          )
+        ''')
+        .order('spot_name', ascending: true);
+
+    final data = (rows as List).cast<Map<String, dynamic>>();
+
+    // Sort checkpoints for display
+    for (final r in data) {
+      final cps = (r['tourist_spot_checkpoints'] as List? ?? const [])
+          .cast<Map<String, dynamic>>();
+      cps.sort((a, b) =>
+          (a['checkpoint_number'] as num? ?? 0).compareTo(b['checkpoint_number'] as num? ?? 0));
+      r['tourist_spot_checkpoints'] = cps;
+    }
+
+    return data;
   }
 }

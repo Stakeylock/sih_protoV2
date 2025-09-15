@@ -1,6 +1,9 @@
+// lib/screens/admin/admin_dashboard_screen.dart
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+
 import 'package:sih_proto/providers/app_state.dart';
+
 import 'package:sih_proto/screens/admin/features/broadcast_screen.dart';
 import 'package:sih_proto/screens/admin/features/content_management_screen.dart';
 import 'package:sih_proto/screens/admin/features/guide_management_screen.dart';
@@ -9,6 +12,9 @@ import 'package:sih_proto/screens/admin/features/role_management_screen.dart';
 import 'package:sih_proto/screens/admin/features/safety_zone_manager.dart';
 import 'package:sih_proto/screens/admin/features/service_management_screen.dart';
 import 'package:sih_proto/screens/admin/features/user_verification_screen.dart';
+
+// New screen import
+import 'package:sih_proto/screens/admin/features/spots_with_checkpoints_screen.dart';
 
 class AdminDashboardScreen extends StatelessWidget {
   const AdminDashboardScreen({super.key});
@@ -45,49 +51,84 @@ class AdminDashboardScreen extends StatelessWidget {
             title: 'Safety Zones',
             icon: Icons.security_rounded,
             color: Colors.green.shade400,
-            onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const SafetyZoneManager())),
+            onTap: () => Navigator.push(
+              context,
+              MaterialPageRoute(builder: (_) => const SafetyZoneManager()),
+            ),
           ),
           _DashboardCard(
             title: 'Live Monitoring',
             icon: Icons.map_rounded,
             color: Colors.purple.shade400,
-            onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const LiveMonitoringScreen())),
+            onTap: () => Navigator.push(
+              context,
+              MaterialPageRoute(builder: (_) => const LiveMonitoringScreen()),
+            ),
           ),
           _DashboardCard(
             title: 'User Verification',
             icon: Icons.verified_user_rounded,
             color: Colors.cyan.shade400,
-            onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const UserVerificationScreen())),
+            onTap: () => Navigator.push(
+              context,
+              MaterialPageRoute(builder: (_) => const UserVerificationScreen()),
+            ),
           ),
-           _DashboardCard(
+          _DashboardCard(
             title: 'Role Management',
             icon: Icons.manage_accounts_rounded,
             color: Colors.blue.shade400,
-            onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const RoleManagementScreen())),
+            onTap: () => Navigator.push(
+              context,
+              MaterialPageRoute(builder: (_) => const RoleManagementScreen()),
+            ),
           ),
-            _DashboardCard(
+          _DashboardCard(
             title: 'Manage Guides',
             icon: Icons.badge_rounded,
             color: Colors.teal.shade400,
-            onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const GuideManagementScreen())),
+            onTap: () => Navigator.push(
+              context,
+              MaterialPageRoute(builder: (_) => const GuideManagementScreen()),
+            ),
           ),
           _DashboardCard(
             title: 'Manage Services',
             icon: Icons.medical_services_rounded,
             color: Colors.red.shade400,
-            onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const ServiceManagementScreen())),
+            onTap: () => Navigator.push(
+              context,
+              MaterialPageRoute(builder: (_) => const ServiceManagementScreen()),
+            ),
           ),
           _DashboardCard(
             title: 'Broadcast Alert',
             icon: Icons.campaign_rounded,
             color: Colors.orange.shade400,
-            onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const BroadcastScreen())),
+            onTap: () => Navigator.push(
+              context,
+              MaterialPageRoute(builder: (_) => const BroadcastScreen()),
+            ),
           ),
-           _DashboardCard(
+          _DashboardCard(
             title: 'Manage Content',
             icon: Icons.edit_document,
             color: Colors.pink.shade300,
-            onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const ContentManagementScreen())),
+            onTap: () => Navigator.push(
+              context,
+              MaterialPageRoute(builder: (_) => const ContentManagementScreen()),
+            ),
+          ),
+
+          // New: Spots & Checkpoints
+          _DashboardCard(
+            title: 'Spots & Checkpoints',
+            icon: Icons.route,
+            color: Colors.indigo.shade400,
+            onTap: () => Navigator.push(
+              context,
+              MaterialPageRoute(builder: (_) => const SpotsWithCheckpointsScreen()),
+            ),
           ),
         ],
       ),
@@ -115,7 +156,7 @@ class _DashboardCard extends StatelessWidget {
       elevation: 4,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
       child: InkWell(
-        onTap: onTap,
+        onTap: onTap, // Pushes the new screen using Navigator per Flutter guidance [1].
         borderRadius: BorderRadius.circular(16),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
@@ -144,4 +185,3 @@ class _DashboardCard extends StatelessWidget {
     );
   }
 }
-

@@ -61,5 +61,14 @@
     "keyType": "Ed25519",
     "issuedAt": "2025-09-13T20:56:17.219Z",
     "status": "active"
+  },
+  {
+    "userId": "20cc8aa3-5d82-4e68-b0b5-4ca4cba98ec8",
+    "did": "did:key:z6MktGx2xheNWcoe7V8FNn865phttupG7zuexU3HzUgBL5qx",
+    "method": "did:key",
+    "publicKeyMultibase": "z6MktGx2xheNWcoe7V8FNn865phttupG7zuexU3HzUgBL5qx",
+    "keyType": "Ed25519",
+    "issuedAt": "2025-09-15T03:07:11.819Z",
+    "status": "active"
   }
 ]
