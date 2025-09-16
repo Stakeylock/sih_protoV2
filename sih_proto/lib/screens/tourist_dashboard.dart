@@ -5,6 +5,7 @@ import 'package:provider/provider.dart';
 import 'package:sih_proto/providers/app_state.dart';
 import 'package:sih_proto/screens/chat_screen.dart';
 import 'package:sih_proto/screens/digital_id_screen.dart';
+import 'package:sih_proto/screens/guide_transport_screen.dart';
 import 'package:sih_proto/screens/live_map_screen.dart';
 import 'package:sih_proto/screens/notifications_screen.dart';
 import 'package:sih_proto/screens/report_incident_screen.dart';
@@ -228,6 +229,12 @@ class _FeaturesGrid extends StatelessWidget {
           iconSvg: CustomIcons.help,
           onTap: () => Navigator.push(context,
               MaterialPageRoute(builder: (_) => const ChatScreen())),
+        ),
+         _FeatureCard(
+          title: 'Guides and transportation',
+          iconSvg: CustomIcons.guideTransport,
+          onTap: () => Navigator.push(context,
+              MaterialPageRoute(builder: (_) => const GuideTransportScreen())),
         ),
       ],
     );

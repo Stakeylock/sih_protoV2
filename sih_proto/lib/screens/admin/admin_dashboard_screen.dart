@@ -86,8 +86,8 @@ class AdminDashboardScreen extends StatelessWidget {
             ),
           ),
           _DashboardCard(
-            title: 'Manage Guides',
-            icon: Icons.badge_rounded,
+            title: 'Manage Guides and Transportation',
+            icon: Icons.travel_explore_rounded,
             color: Colors.teal.shade400,
             onTap: () => Navigator.push(
               context,
