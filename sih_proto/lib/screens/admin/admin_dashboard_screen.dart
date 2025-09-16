@@ -12,9 +12,8 @@ import 'package:sih_proto/screens/admin/features/role_management_screen.dart';
 import 'package:sih_proto/screens/admin/features/safety_zone_manager.dart';
 import 'package:sih_proto/screens/admin/features/service_management_screen.dart';
 import 'package:sih_proto/screens/admin/features/user_verification_screen.dart';
-
-// New screen import
 import 'package:sih_proto/screens/admin/features/spots_with_checkpoints_screen.dart';
+import 'package:sih_proto/screens/admin/features/women_child_safety_screen.dart';
 
 class AdminDashboardScreen extends StatelessWidget {
   const AdminDashboardScreen({super.key});
@@ -29,7 +28,10 @@ class AdminDashboardScreen extends StatelessWidget {
       appBar: AppBar(
         backgroundColor: const Color(0xFF2d3748),
         elevation: 0,
-        title: Text('Welcome, $userName', style: const TextStyle(fontWeight: FontWeight.bold)),
+        title: Text(
+          'Welcome, $userName',
+          style: const TextStyle(fontWeight: FontWeight.bold),
+        ),
         actions: [
           IconButton(
             icon: const Icon(Icons.logout),
@@ -119,15 +121,26 @@ class AdminDashboardScreen extends StatelessWidget {
               MaterialPageRoute(builder: (_) => const ContentManagementScreen()),
             ),
           ),
-
-          // New: Spots & Checkpoints
           _DashboardCard(
             title: 'Spots & Checkpoints',
             icon: Icons.route,
             color: Colors.indigo.shade400,
             onTap: () => Navigator.push(
               context,
-              MaterialPageRoute(builder: (_) => const SpotsWithCheckpointsScreen()),
+              MaterialPageRoute(
+                  builder: (_) => const SpotsWithCheckpointsScreen()),
+            ),
+          ),
+
+          // _DashboardCard
+          _DashboardCard(
+            title: 'Women & Child Safety',
+            icon: Icons.sos_rounded,
+            color: Colors.deepPurpleAccent.shade200,
+            onTap: () => Navigator.push(
+              context,
+              MaterialPageRoute(
+                  builder: (_) => const WomenChildSafetyScreen()),
             ),
           ),
         ],
@@ -156,7 +169,7 @@ class _DashboardCard extends StatelessWidget {
       elevation: 4,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
       child: InkWell(
-        onTap: onTap, // Pushes the new screen using Navigator per Flutter guidance [1].
+        onTap: onTap,
         borderRadius: BorderRadius.circular(16),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,

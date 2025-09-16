@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:sih_proto/screens/admin/features/women_child_safety_screen.dart';
 
 class Incident {
   final String id;
@@ -159,6 +160,23 @@ class _PoliceDashboardState extends State<PoliceDashboard> {
             : ListView(
                 padding: const EdgeInsets.all(16.0),
                 children: [
+                   //New Women & Child Support button
+                  GestureDetector(
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(builder: (context) => const WomenChildSafetyScreen()),
+                      );
+                    },
+                    child: _buildInfoCard(
+                      'Women & Child Support',
+                      '',
+                      Icons.sos_rounded,
+                      Colors.pinkAccent,
+                      centerText: true, // 👈 only this card centers its text
+                    ),
+                  ),
+
                   _buildInfoCard('Reported Incidents', _incidents.length.toString(), Icons.report, Colors.orange),
                   const SizedBox(height: 20),
                   _buildInfoCard('Active Units', activeUnits.toString(), Icons.local_police, Colors.blue),
@@ -320,30 +338,34 @@ class _PoliceDashboardState extends State<PoliceDashboard> {
     );
   }
 
-  Widget _buildInfoCard(String title, String value, IconData icon, Color color) {
-    return Card(
-      color: const Color(0xFF2d3748),
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
-      child: Padding(
-        padding: const EdgeInsets.all(20.0),
-        child: Row(
-          children: [
-            Icon(icon, size: 40, color: color),
-            const SizedBox(width: 20),
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(title, style: const TextStyle(color: Colors.white70, fontSize: 16)),
+  Widget _buildInfoCard(String title, String value, IconData icon, Color color, {bool centerText = false}) {
+  return Card(
+    color: const Color(0xFF2d3748),
+    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
+    child: Padding(
+      padding: const EdgeInsets.all(20.0),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.center, // align vertically
+        children: [
+          Icon(icon, size: 40, color: color),
+          const SizedBox(width: 20),
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisAlignment: centerText ? MainAxisAlignment.center : MainAxisAlignment.start,
+            children: [
+              Text(title, style: const TextStyle(color: Colors.white70, fontSize: 16)),
+              if (value.isNotEmpty) ...[
                 const SizedBox(height: 5),
                 Text(
                   value,
                   style: const TextStyle(color: Colors.white, fontSize: 28, fontWeight: FontWeight.bold),
                 ),
               ],
-            ),
-          ],
-        ),
+            ],
+          ),
+        ],
       ),
-    );
-  }
+    ),
+  );
+ }
 }
