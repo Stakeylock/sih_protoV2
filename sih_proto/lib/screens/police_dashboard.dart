@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import 'package:sih_proto/providers/app_state.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:sih_proto/screens/admin/features/women_child_safety_screen.dart';
 
@@ -135,6 +137,7 @@ class _PoliceDashboardState extends State<PoliceDashboard> {
 
   @override
   Widget build(BuildContext context) {
+    final appState = Provider.of<AppState>(context);
     final closedCases = _incidents.where((i) => i.status == 'Closed').length;
     final activeUnits = _incidents.where((i) => i.status == 'Active').length;
 
@@ -146,8 +149,11 @@ class _PoliceDashboardState extends State<PoliceDashboard> {
         elevation: 0,
         actions: [
           IconButton(
-            icon: const Icon(Icons.logout, color: Colors.white),
-            onPressed: () {},
+            icon: const Icon(Icons.logout),
+            onPressed: () {
+              Provider.of<AppState>(context, listen: false).signOut();
+            },
+            tooltip: 'Logout',
           ),
         ],
       ),

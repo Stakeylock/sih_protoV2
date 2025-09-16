@@ -115,6 +115,15 @@ def check_location():
 
     except Exception as e:
         return jsonify({'error': str(e)}), 500
+    
+@app.route('/incidents', methods=['GET'])
+def get_incidents():
+    incidents = [
+        {"id": "1", "title": "Theft at City Park", "description": "Bag stolen", "severity": "High", "reportedAt": "10 mins ago"},
+        {"id": "2", "title": "Suspicious Activity", "description": "Loitering", "severity": "Medium", "reportedAt": "30 mins ago"},
+        {"id": "3", "title": "Lost Tourist", "description": "Needs help", "severity": "Low", "reportedAt": "1 hour ago"}
+    ]
+    return jsonify(incidents)
 
 # --- Main execution block ---
 if __name__ == '__main__':
