@@ -96,7 +96,6 @@ class DatabaseService {
     }
   }
 
-  // ------------------ Incidents ------------------
 
   Future<void> createSosIncident({
     required String userId,
