@@ -87,48 +87,51 @@ class _PanicButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: () {
-        Provider.of<AppState>(context, listen: false).sendPanicAlert();
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('SOS Alert Sent! Help is on the way.'),
-            backgroundColor: Colors.red,
-          ),
-        );
-      },
-      child: Container(
-        width: double.infinity,
-        padding: const EdgeInsets.symmetric(vertical: 24),
-        decoration: BoxDecoration(
-          gradient: const LinearGradient(
-            colors: [Colors.red, Color.fromARGB(255, 255, 82, 82)],
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-          ),
-          borderRadius: BorderRadius.circular(16),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.red.withOpacity(0.4),
-              blurRadius: 10,
-              offset: const Offset(0, 4),
+    return Center(
+      child: GestureDetector(
+        onTap: () {
+          Provider.of<AppState>(context, listen: false).sendPanicAlert();
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('SOS Alert Sent! Help is on the way.'),
+              backgroundColor: Colors.red,
             ),
-          ],
-        ),
-        child: const Column(
-          children: [
-            Icon(Icons.warning_amber_rounded, color: Colors.white, size: 40),
-            SizedBox(height: 8),
-            Text(
-              'SOS PANIC BUTTON',
-              style: TextStyle(
-                color: Colors.white,
-                fontWeight: FontWeight.bold,
-                fontSize: 18,
-                letterSpacing: 1.2,
+          );
+        },
+        child: Container(
+          width: 220,
+          height: 220,
+          decoration: BoxDecoration(
+            shape: BoxShape.circle,
+            gradient: const LinearGradient(
+              colors: [Colors.red, Color.fromARGB(255, 255, 82, 82)],
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+            ),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.red.withOpacity(0.4),
+                blurRadius: 10,
+                offset: const Offset(0, 4),
               ),
-            ),
-          ],
+            ],
+          ),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: const [
+              Icon(Icons.warning_amber_rounded, color: Colors.white, size: 48),
+              SizedBox(height: 8),
+              Text(
+                'SOS',
+                style: TextStyle(
+                  color: Colors.white,
+                  fontWeight: FontWeight.bold,
+                  fontSize: 18,
+                  letterSpacing: 1.2,
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );
@@ -245,11 +248,13 @@ class _FeatureCard extends StatelessWidget {
   final String title;
   final String iconSvg;
   final VoidCallback onTap;
+  final Color iconColor; // Add this property
 
   const _FeatureCard({
     required this.title,
     required this.iconSvg,
     required this.onTap,
+    this.iconColor = Colors.blue, // default color
   });
 
   @override
@@ -260,18 +265,32 @@ class _FeatureCard extends StatelessWidget {
         decoration: BoxDecoration(
           color: Theme.of(context).cardColor,
           borderRadius: BorderRadius.circular(16),
+          boxShadow: [
+            BoxShadow(
+              color: iconColor.withOpacity(0.3), // colored shadow
+              blurRadius: 6,
+              offset: const Offset(0, 4),
+            ),
+          ],
         ),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            SvgPicture.string(
-              iconSvg,
-              colorFilter: ColorFilter.mode(
-                Theme.of(context).primaryColor,
-                BlendMode.srcIn,
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: iconColor.withOpacity(0.2), // background circle color
+                shape: BoxShape.circle,
               ),
-              width: 48,
-              height: 48,
+              child: SvgPicture.string(
+                iconSvg,
+                colorFilter: ColorFilter.mode(
+                  iconColor, // use the colored icon here
+                  BlendMode.srcIn,
+                ),
+                width: 48,
+                height: 48,
+              ),
             ),
             const SizedBox(height: 12),
             Text(
@@ -288,4 +307,3 @@ class _FeatureCard extends StatelessWidget {
     );
   }
 }
-
