@@ -91,28 +91,21 @@ class _PanicButton extends StatelessWidget {
     return Center(
       child: GestureDetector(
         onTap: () async {
-          final appState = Provider.of<AppState>(context, listen: false);
-          final alertId = await appState.sendPanicAlert();
-
+          final alertId =
+              await Provider.of<AppState>(context, listen: false)
+                  .sendPanicAlert();
           if (alertId != null && context.mounted) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(
-                content: Text('SOS Alert Sent! Connecting to admin...'),
-                backgroundColor: Colors.red,
-              ),
-            );
-            // Navigate to the streaming screen
             Navigator.push(
               context,
               MaterialPageRoute(
-                builder: (_) => SOSStreamScreen(alertId: alertId),
+                builder: (_) => SOSStreamScreen(sosId: alertId),
               ),
             );
           } else {
              ScaffoldMessenger.of(context).showSnackBar(
               const SnackBar(
-                content: Text('Failed to send SOS. Check connection and permissions.'),
-                backgroundColor: Colors.orange,
+                content: Text('Could not send SOS. Check connection.'),
+                backgroundColor: Colors.red,
               ),
             );
           }
@@ -267,13 +260,13 @@ class _FeatureCard extends StatelessWidget {
   final String title;
   final String iconSvg;
   final VoidCallback onTap;
-  final Color iconColor; 
+  final Color iconColor; // Add this property
 
   const _FeatureCard({
     required this.title,
     required this.iconSvg,
     required this.onTap,
-    this.iconColor = Colors.blue, 
+    this.iconColor = Colors.blue, // default color
   });
 
   @override
@@ -286,7 +279,7 @@ class _FeatureCard extends StatelessWidget {
           borderRadius: BorderRadius.circular(16),
           boxShadow: [
             BoxShadow(
-              color: iconColor.withOpacity(0.3), 
+              color: iconColor.withOpacity(0.3), // colored shadow
               blurRadius: 6,
               offset: const Offset(0, 4),
             ),
@@ -298,13 +291,13 @@ class _FeatureCard extends StatelessWidget {
             Container(
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
-                color: iconColor.withOpacity(0.2), 
+                color: iconColor.withOpacity(0.2), // background circle color
                 shape: BoxShape.circle,
               ),
               child: SvgPicture.string(
                 iconSvg,
                 colorFilter: ColorFilter.mode(
-                  iconColor, 
+                  iconColor, // use the colored icon here
                   BlendMode.srcIn,
                 ),
                 width: 48,

@@ -42,7 +42,7 @@ class _AdminSOSViewerScreenState extends State<AdminSOSViewerScreen> {
   @override
   Widget build(BuildContext context) {
     final appState = Provider.of<AppState>(context, listen: false);
-    final touristId = widget.alert['tourist_id'] ?? 'Unknown User';
+    final touristId = widget.alert['tourist_id'];
 
     return Scaffold(
       appBar: AppBar(
@@ -71,7 +71,7 @@ class _AdminSOSViewerScreenState extends State<AdminSOSViewerScreen> {
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
                   Text(
-                    'Emergency Type: ${widget.alert['emergency_type']?.toUpperCase() ?? 'N/A'}',
+                    'Emergency Type: ${widget.alert['emergency_type']?.toUpperCase()}',
                     style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
                   ),
                   const SizedBox(height: 16),
@@ -122,3 +122,4 @@ class _AdminSOSViewerScreenState extends State<AdminSOSViewerScreen> {
     );
   }
 }
+
