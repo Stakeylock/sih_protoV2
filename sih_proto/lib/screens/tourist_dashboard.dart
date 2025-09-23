@@ -10,6 +10,7 @@ import 'package:sih_proto/screens/live_map_screen.dart';
 import 'package:sih_proto/screens/notifications_screen.dart';
 import 'package:sih_proto/screens/report_incident_screen.dart';
 import 'package:sih_proto/screens/safe_zones_screen.dart';
+import 'package:sih_proto/screens/sos_stream_screen.dart';
 import 'package:sih_proto/utils/custom_icons.dart';
 
 class TouristDashboard extends StatelessWidget {
@@ -89,14 +90,32 @@ class _PanicButton extends StatelessWidget {
   Widget build(BuildContext context) {
     return Center(
       child: GestureDetector(
-        onTap: () {
-          Provider.of<AppState>(context, listen: false).sendPanicAlert();
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('SOS Alert Sent! Help is on the way.'),
-              backgroundColor: Colors.red,
-            ),
-          );
+        onTap: () async {
+          final appState = Provider.of<AppState>(context, listen: false);
+          final alertId = await appState.sendPanicAlert();
+
+          if (alertId != null && context.mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text('SOS Alert Sent! Connecting to admin...'),
+                backgroundColor: Colors.red,
+              ),
+            );
+            // Navigate to the streaming screen
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (_) => SOSStreamScreen(alertId: alertId),
+              ),
+            );
+          } else {
+             ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text('Failed to send SOS. Check connection and permissions.'),
+                backgroundColor: Colors.orange,
+              ),
+            );
+          }
         },
         child: Container(
           width: 220,
@@ -248,13 +267,13 @@ class _FeatureCard extends StatelessWidget {
   final String title;
   final String iconSvg;
   final VoidCallback onTap;
-  final Color iconColor; // Add this property
+  final Color iconColor; 
 
   const _FeatureCard({
     required this.title,
     required this.iconSvg,
     required this.onTap,
-    this.iconColor = Colors.blue, // default color
+    this.iconColor = Colors.blue, 
   });
 
   @override
@@ -267,7 +286,7 @@ class _FeatureCard extends StatelessWidget {
           borderRadius: BorderRadius.circular(16),
           boxShadow: [
             BoxShadow(
-              color: iconColor.withOpacity(0.3), // colored shadow
+              color: iconColor.withOpacity(0.3), 
               blurRadius: 6,
               offset: const Offset(0, 4),
             ),
@@ -279,13 +298,13 @@ class _FeatureCard extends StatelessWidget {
             Container(
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
-                color: iconColor.withOpacity(0.2), // background circle color
+                color: iconColor.withOpacity(0.2), 
                 shape: BoxShape.circle,
               ),
               child: SvgPicture.string(
                 iconSvg,
                 colorFilter: ColorFilter.mode(
-                  iconColor, // use the colored icon here
+                  iconColor, 
                   BlendMode.srcIn,
                 ),
                 width: 48,

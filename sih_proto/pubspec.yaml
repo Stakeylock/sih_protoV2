@@ -69,7 +69,7 @@ dependencies:
   intl_phone_number_input: ^0.7.4
   country_pickers: ^3.0.1
   qr_flutter: ^4.1.0
-
+  flutter_webrtc: ^1.2.0
 
 dev_dependencies:
   flutter_test:

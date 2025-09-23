@@ -1,9 +1,6 @@
-// lib/screens/admin/admin_dashboard_screen.dart
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-
 import 'package:sih_proto/providers/app_state.dart';
-
 import 'package:sih_proto/screens/admin/features/broadcast_screen.dart';
 import 'package:sih_proto/screens/admin/features/content_management_screen.dart';
 import 'package:sih_proto/screens/admin/features/guide_management_screen.dart';
@@ -14,6 +11,7 @@ import 'package:sih_proto/screens/admin/features/service_management_screen.dart'
 import 'package:sih_proto/screens/admin/features/user_verification_screen.dart';
 import 'package:sih_proto/screens/admin/features/spots_with_checkpoints_screen.dart';
 import 'package:sih_proto/screens/admin/features/women_child_safety_screen.dart';
+import 'package:sih_proto/screens/admin/admin_sos_viewer_screen.dart';
 
 class AdminDashboardScreen extends StatelessWidget {
   const AdminDashboardScreen({super.key});
@@ -22,6 +20,7 @@ class AdminDashboardScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final appState = Provider.of<AppState>(context);
     final userName = appState.userProfile?['full_name'] ?? 'Admin';
+    final activeAlerts = appState.activeAlerts;
 
     return Scaffold(
       backgroundColor: const Color(0xFF1a202c),
@@ -33,6 +32,41 @@ class AdminDashboardScreen extends StatelessWidget {
           style: const TextStyle(fontWeight: FontWeight.bold),
         ),
         actions: [
+          if (activeAlerts.isNotEmpty)
+            Stack(
+              alignment: Alignment.center,
+              children: [
+                IconButton(
+                  icon: const Icon(Icons.warning_amber_rounded, color: Colors.red),
+                  onPressed: () {
+                     Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => AdminSOSViewerScreen(alert: activeAlerts.first),
+                      ),
+                    );
+                  },
+                  tooltip: 'Active SOS Alerts',
+                ),
+                 Positioned(
+                  top: 8,
+                  right: 8,
+                  child: Container(
+                    padding: const EdgeInsets.all(2),
+                    decoration: BoxDecoration(
+                      color: Colors.red,
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    constraints: const BoxConstraints(minWidth: 16, minHeight: 16),
+                    child: Text(
+                      '${activeAlerts.length}',
+                      style: const TextStyle(color: Colors.white, fontSize: 10),
+                      textAlign: TextAlign.center,
+                    ),
+                  ),
+                )
+              ],
+            ),
           IconButton(
             icon: const Icon(Icons.logout),
             onPressed: () {
@@ -131,8 +165,6 @@ class AdminDashboardScreen extends StatelessWidget {
                   builder: (_) => const SpotsWithCheckpointsScreen()),
             ),
           ),
-
-          // _DashboardCard
           _DashboardCard(
             title: 'Women & Child Safety',
             icon: Icons.sos_rounded,
